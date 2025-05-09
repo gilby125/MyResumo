@@ -21,7 +21,9 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8080
+    PORT=8080 \
+    MONGODB_URI=mongodb://mongodb:27017/myresumo
+
 
 WORKDIR /code
 
@@ -39,12 +41,14 @@ RUN addgroup --system app && \
 USER app
 
 # Expose the port the app runs on
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
-EXPOSE 8080
+EXPOSE ${PORT}
 
 # Add healthcheck to ensure the application is responsive
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # Use uvicorn for production deployment
+# Expose the port before running the command
+
+# Use uvicorn for production deployment with environment variable
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT}"]
