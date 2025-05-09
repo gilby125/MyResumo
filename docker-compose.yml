@@ -7,7 +7,7 @@ services:
       - DATABASE_URL=postgresql://myresumo:myresumo@db:5432/myresumo
       - PYTHONPATH=/code/app
     ports:
-      - "8080"
+      - "8080:8080"
     depends_on:
       db:
         condition: service_healthy

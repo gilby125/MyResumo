@@ -36,3 +36,4 @@ sentence-transformers
 tiktoken
 mkdocs
 mkdocs-material
+psycopg2-binary>=2.9.3,<3.0.0
