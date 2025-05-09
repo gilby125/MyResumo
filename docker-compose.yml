@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    environment:
+      - DATABASE_URL=postgresql://myresumo:myresumo@db:5432/myresumo
+      - PYTHONPATH=/code/app
+    ports:
+      - "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - myresumo-net
+
+  db:
+    image: postgres:13-alpine
+    environment:
+      - POSTGRES_USER=myresumo
+      - POSTGRES_PASSWORD=myresumo
+      - POSTGRES_DB=myresumo
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myresumo -d myresumo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - myresumo-net
+
+volumes:
+  postgres_data:
+
+networks:
+  myresumo-net:
+    driver: bridge
