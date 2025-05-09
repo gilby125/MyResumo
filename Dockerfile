@@ -45,7 +45,7 @@ EXPOSE ${PORT}
 
 # Add healthcheck to ensure the application is responsive
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
+    CMD curl -f http://localhost:8080/health || exit 1
 
 # Use uvicorn for production deployment
 # Expose the port before running the command
