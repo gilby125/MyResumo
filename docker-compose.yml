@@ -4,26 +4,23 @@ services:
   web:
     build: .
     environment:
-      - DATABASE_URL=postgresql://myresumo:myresumo@db:5432/myresumo
+      - MONGODB_URI=mongodb://mongodb:27017/myresumo
+      - API_KEY=${API_KEY}
       - PYTHONPATH=/code/app
     ports:
-      - "8080:8080"
+      - "8080"
     depends_on:
-      db:
+      mongodb:
         condition: service_healthy
     networks:
       - myresumo-net
 
-  db:
-    image: postgres:13-alpine
-    environment:
-      - POSTGRES_USER=myresumo
-      - POSTGRES_PASSWORD=myresumo
-      - POSTGRES_DB=myresumo
+  mongodb:
+    image: mongo:latest
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mongo_data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U myresumo -d myresumo"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -31,7 +28,7 @@ services:
       - myresumo-net
 
 volumes:
-  postgres_data:
+  mongo_data:
 
 networks:
   myresumo-net:
