@@ -41,7 +41,7 @@ RUN addgroup --system app && \
 USER app
 
 # Expose the port the app runs on
-EXPOSE ${PORT}
+EXPOSE 8080
 
 # Add healthcheck to ensure the application is responsive
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
