@@ -66,31 +66,31 @@ class LaTeXGenerator:
         env : jinja2.Environment
             The Jinja2 environment for template rendering
         """
-        logger.info(f"LaTeXGenerator __init__ received template_dir: '{template_dir}'")
+        logger.error(f"CRITICAL_DEBUG: LaTeXGenerator __init__ received template_dir: '{template_dir}'") # Changed to error
         
         # Ensure the path is treated as absolute, especially within Docker context
         # WORKDIR is /code, so if a relative path like 'app/services/...' is given,
         # os.path.abspath will make it /code/app/services/...
         # If an absolute path like '/code/app/services/...' is given, it remains absolute.
         self.template_dir = os.path.abspath(template_dir)
-        logger.info(f"LaTeXGenerator __init__ using absolute template_dir: '{self.template_dir}'")
+        logger.error(f"CRITICAL_DEBUG: LaTeXGenerator __init__ using absolute template_dir: '{self.template_dir}'") # Changed to error
 
         if not os.path.exists(self.template_dir):
-            logger.error(f"Template directory DOES NOT EXIST: '{self.template_dir}'")
+            logger.error(f"CRITICAL_DEBUG: Template directory DOES NOT EXIST: '{self.template_dir}'") # Changed to error
             # Listing content of parent directory for debugging if path is slightly off
             parent_dir = os.path.dirname(self.template_dir)
             if os.path.exists(parent_dir):
-                logger.error(f"Contents of parent directory '{parent_dir}': {os.listdir(parent_dir)}")
+                logger.error(f"CRITICAL_DEBUG: Contents of parent directory '{parent_dir}': {os.listdir(parent_dir)}") # Changed to error
             else:
-                logger.error(f"Parent directory '{parent_dir}' also does not exist.")
+                logger.error(f"CRITICAL_DEBUG: Parent directory '{parent_dir}' also does not exist.") # Changed to error
             raise ValueError(f"Template directory not found: {self.template_dir}")
         
         if not os.listdir(self.template_dir):
-            logger.error(f"Template directory IS EMPTY: '{self.template_dir}'")
+            logger.error(f"CRITICAL_DEBUG: Template directory IS EMPTY: '{self.template_dir}'") # Changed to error
             raise ValueError(f"Template directory is empty: {self.template_dir}")
         
-        logger.info(f"Template directory '{self.template_dir}' exists and is not empty.")
-        logger.info(f"Contents of template directory '{self.template_dir}': {os.listdir(self.template_dir)}")
+        logger.error(f"CRITICAL_DEBUG: Template directory '{self.template_dir}' exists and is not empty.") # Changed to error
+        logger.error(f"CRITICAL_DEBUG: Contents of template directory '{self.template_dir}': {os.listdir(self.template_dir)}") # Changed to error
             
         self.json_data = None
         self.env = None
@@ -121,8 +121,8 @@ class LaTeXGenerator:
         import os
 
         final_loader_path = os.path.abspath(self.template_dir)
-        logger.info(f"Initializing Jinja2 FileSystemLoader with path: {self.template_dir}")
-        logger.info(f"Absolute path for FileSystemLoader: {final_loader_path}")
+        logger.error(f"CRITICAL_DEBUG: Initializing Jinja2 FileSystemLoader with path: {self.template_dir}") # Changed to error
+        logger.error(f"CRITICAL_DEBUG: Absolute path for FileSystemLoader: {final_loader_path}") # Changed to error
         
         self.env = Environment(
             loader=FileSystemLoader(final_loader_path), # Use absolute path
@@ -327,8 +327,8 @@ class LaTeXGenerator:
         self.preprocess_json_data()
 
         try:
-            print(f"DEBUG: Loading template '{template_name}' from {self.template_dir}")
-            print(f"DEBUG: Available templates: {os.listdir(self.template_dir)}")
+            logger.error(f"CRITICAL_DEBUG: Loading template '{template_name}' from {self.template_dir}") # Changed to error
+            logger.error(f"CRITICAL_DEBUG: Available templates in '{self.template_dir}': {os.listdir(self.template_dir)}") # Changed to error
             template = self.env.get_template(template_name)
 
             rendered_content = template.render(data=self.json_data)
