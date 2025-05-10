@@ -790,12 +790,12 @@ async def download_resume(
             detail="Optimized resume data not available. Please optimize the resume first.",
         )
     try:
-        latex_dir = Path("data/sample_latex_templates")
-        if not latex_dir.exists():
-            latex_dir = Path("app/services/resume/latex_templates")
-            if not latex_dir.exists():
-                latex_dir.mkdir(parents=True, exist_ok=True)
-        generator = LaTeXGenerator(str(latex_dir))
+        # Define the absolute path to the templates directory within the Docker container
+        # This path corresponds to where the 'app/services/resume/latex_templates' directory
+        # from the host is copied into the container via the Dockerfile (COPY ./app /code/app)
+        # and the WORKDIR /code instruction.
+        container_template_dir = "/code/app/services/resume/latex_templates"
+        generator = LaTeXGenerator(container_template_dir)
         if use_optimized:
             json_data = resume["optimized_data"]
         else:

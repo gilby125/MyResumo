@@ -41,13 +41,13 @@ class LaTeXGenerator:
         create_simple_template: Creates a simple LaTeX resume template with Jinja2 placeholders.
     """
 
-    def __init__(self, template_dir="/code/app/data/sample_latex_templates"):  # Exact directory name
+    def __init__(self, template_dir: str):
         """Initialize the LaTeX generator with Docker-compatible paths.
 
         Parameters
         ----------
-        template_dir : str, optional
-            Absolute path to template directory (default: /app/data/templates)
+        template_dir : str
+            Absolute path to template directory within the container.
 
         Attributes:
         ----------
@@ -59,8 +59,16 @@ class LaTeXGenerator:
             The Jinja2 environment for template rendering
         """
         self.template_dir = template_dir
+        # Ensure os is imported if not already
+        import os
         if not os.path.exists(self.template_dir):
-            raise ValueError(f"Template directory not found: {self.template_dir}")
+            # Try a fallback if the primary one doesn't exist - useful for local dev vs docker
+            fallback_dir = "app/services/resume/latex_templates"
+            if os.path.exists(fallback_dir):
+                self.template_dir = fallback_dir
+            else:
+                raise ValueError(f"Template directory not found: {self.template_dir} (and fallback {fallback_dir} also not found)")
+        
         if not os.listdir(self.template_dir):
             raise ValueError(f"Template directory is empty: {self.template_dir}")
             
