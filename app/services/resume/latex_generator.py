@@ -58,18 +58,39 @@ class LaTeXGenerator:
         env : jinja2.Environment
             The Jinja2 environment for template rendering
         """
-        self.template_dir = template_dir
         # Ensure os is imported if not already
         import os
-        if not os.path.exists(self.template_dir):
-            # Try a fallback if the primary one doesn't exist - useful for local dev vs docker
-            fallback_dir = "app/services/resume/latex_templates"
-            if os.path.exists(fallback_dir):
-                self.template_dir = fallback_dir
-            else:
-                raise ValueError(f"Template directory not found: {self.template_dir} (and fallback {fallback_dir} also not found)")
+        import logging
+        logger = logging.getLogger(__name__)
+
+        logger.info(f"LaTeXGenerator __init__ received template_dir: {template_dir}")
+        self.template_dir = template_dir
         
+        if not os.path.exists(self.template_dir):
+            logger.warning(f"Primary template_dir '{self.template_dir}' not found. Trying fallback.")
+            fallback_dir = "app/services/resume/latex_templates" # This would be relative to WORKDIR if initial path fails
+            # For Docker, initial path should be absolute and exist. This fallback is more for local.
+            # If initial path is /code/app/services/resume/latex_templates, this check might be misleading in Docker.
+            # Let's check absolute version of fallback too.
+            abs_fallback_dir = os.path.abspath(fallback_dir)
+            logger.info(f"Fallback directory (relative): {fallback_dir}")
+            logger.info(f"Fallback directory (absolute): {abs_fallback_dir}")
+
+            if os.path.exists(fallback_dir): # Check relative to current WORKDIR
+                self.template_dir = fallback_dir
+                logger.info(f"Using relative fallback_dir: {self.template_dir}")
+            elif os.path.exists(abs_fallback_dir) and "/code/" in abs_fallback_dir : # Check if absolute path makes sense in container
+                self.template_dir = abs_fallback_dir
+                logger.info(f"Using absolute fallback_dir: {self.template_dir}")
+            else:
+                logger.error(f"Template directory not found: initial '{template_dir}', fallback '{fallback_dir}', abs_fallback '{abs_fallback_dir}'")
+                raise ValueError(f"Template directory not found: {template_dir} (and fallbacks also not found)")
+        
+        logger.info(f"LaTeXGenerator __init__ effective template_dir: {self.template_dir}")
+        logger.info(f"LaTeXGenerator __init__ absolute effective template_dir: {os.path.abspath(self.template_dir)}")
+
         if not os.listdir(self.template_dir):
+            logger.error(f"Template directory is empty: {self.template_dir}")
             raise ValueError(f"Template directory is empty: {self.template_dir}")
             
         self.json_data = None
@@ -96,8 +117,16 @@ class LaTeXGenerator:
         -------
                 None
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        import os
+
+        final_loader_path = os.path.abspath(self.template_dir)
+        logger.info(f"Initializing Jinja2 FileSystemLoader with path: {self.template_dir}")
+        logger.info(f"Absolute path for FileSystemLoader: {final_loader_path}")
+        
         self.env = Environment(
-            loader=FileSystemLoader(self.template_dir),
+            loader=FileSystemLoader(final_loader_path), # Use absolute path
             autoescape=False,
             block_start_string="<%",
             block_end_string="%>",
