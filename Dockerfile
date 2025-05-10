@@ -21,10 +21,7 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8080 \
-    MONGODB_URI=mongodb://mongodb:27017/myresumo \
-    PYTHONPATH=/code
-
+    PORT=8080
 
 WORKDIR /code
 
@@ -33,29 +30,21 @@ COPY --from=builder /usr/local/lib/python3.11/site-packages/ /usr/local/lib/pyth
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 # Copy application code
-COPY ./app /code/app/
-COPY ./data /code/data/
-COPY ./scripts /code/scripts/
+COPY ./app /code/app
 
 # Create a non-root user and switch to it for security
-# RUN addgroup --system app && \
-#     adduser --system --group app && \
-#     chown -R app:app /code # Temporarily disable chown
-# USER app # Temporarily disable user switching
+RUN addgroup --system app && \
+    adduser --system --group app && \
+    chown -R app:app /code
+USER app
 
 # Expose the port the app runs on
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
 EXPOSE 8080
 
 # Add healthcheck to ensure the application is responsive
-# HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-#     CMD curl -f http://localhost:8080/health || exit 1 # Temporarily disable healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # Use uvicorn for production deployment
-# Expose the port before running the command
-
-# RUN python /code/scripts/post_install_check.py # Reverted
-
-# Use uvicorn for production deployment
-# WORKDIR /code and ENV PYTHONPATH /code are already set
-# Temporarily change CMD to keep container running for inspection
-CMD ["tail", "-f", "/dev/null"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT}"]
