@@ -12,8 +12,6 @@ services:
       - PORT=8080
     volumes:
       - .:/app
-      - ./data/sample_latex_templates:/code/app/data/sample_latex_templates:ro  # Read-only mount
-      - ./data/sample_latex_templates:/app/services/resume/latex_templates:ro  # Also mount to expected path
     ports:
       - "8080"
     depends_on:
