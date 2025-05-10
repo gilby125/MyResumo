@@ -41,7 +41,7 @@ class LaTeXGenerator:
         create_simple_template: Creates a simple LaTeX resume template with Jinja2 placeholders.
     """
 
-    def __init__(self, template_dir="/code/app/data/templates"):  # Match Docker container path
+    def __init__(self, template_dir="/code/app/data/sample_latex_templates"):  # Exact directory name
         """Initialize the LaTeX generator with Docker-compatible paths.
 
         Parameters
@@ -263,6 +263,10 @@ class LaTeXGenerator:
 
     def generate_from_template(self, template_name) -> str | bool:
         """Generates LaTeX content from a template using the loaded JSON data.
+        
+        Debug info:
+        - template_dir: {self.template_dir}
+        - available templates: {os.listdir(self.template_dir) if os.path.exists(self.template_dir) else 'Directory missing'}
 
         This method renders the specified Jinja2 template with the preprocessed JSON data,
         producing LaTeX code that can be compiled into a PDF document.
@@ -287,6 +291,8 @@ class LaTeXGenerator:
         self.preprocess_json_data()
 
         try:
+            print(f"DEBUG: Loading template '{template_name}' from {self.template_dir}")
+            print(f"DEBUG: Available templates: {os.listdir(self.template_dir)}")
             template = self.env.get_template(template_name)
 
             rendered_content = template.render(data=self.json_data)
