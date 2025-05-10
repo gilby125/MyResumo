@@ -5,7 +5,6 @@ resume creation, retrieval, optimization, PDF generation and deletion. It handle
 the interface between HTTP requests and the resume repository, and coordinates
 AI-powered resume optimization services.
 """
-
 import json
 import logging
 import os

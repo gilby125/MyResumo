@@ -39,7 +39,6 @@ RUN addgroup --system app && \
 USER app
 
 # Expose the port the app runs on
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
 EXPOSE 8080
 
 # Add healthcheck to ensure the application is responsive
