@@ -31,7 +31,10 @@ COPY --from=builder /usr/local/lib/python3.11/site-packages/ /usr/local/lib/pyth
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 # Copy application code
+# Copy application code and templates
 COPY ./app /code/app
+RUN mkdir -p /code/app/services/resume/latex_templates && \
+    cp /code/app/services/resume/latex_templates/* /code/app/services/resume/latex_templates/
 
 # Create a non-root user and switch to it for security
 RUN addgroup --system app && \
