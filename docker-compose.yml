@@ -11,8 +11,7 @@ services:
       - PYTHONPATH=/code
       - PORT=8080
     volumes:
-      - ./app:/code/app
-      - ./data:/code/data
+      - .:/code
     ports:
       - "8080"
     depends_on:
