@@ -12,7 +12,7 @@ services:
       - PORT=8080
     volumes:
       - .:/app
-      - ./data:/app/data/templates  # Add template directory mount
+      - ./data/sample_latex_templates:/code/app/data/sample_latex_templates  # Exact directory mapping
     ports:
       - "8080"
     depends_on:

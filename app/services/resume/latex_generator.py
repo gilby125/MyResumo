@@ -41,7 +41,7 @@ class LaTeXGenerator:
         create_simple_template: Creates a simple LaTeX resume template with Jinja2 placeholders.
     """
 
-    def __init__(self, template_dir="/app/data/templates"):
+    def __init__(self, template_dir="/code/app/data/templates"):  # Match Docker container path
         """Initialize the LaTeX generator with Docker-compatible paths.
 
         Parameters
@@ -397,7 +397,7 @@ def main():
     Returns:
         None
     """
-    generator = LaTeXGenerator("../../../data/sample_latex_templates")
+    generator = LaTeXGenerator("/code/app/data/sample_latex_templates")  # Docker container path
 
     print("Creating sample templates...")
     generator.create_simple_template()
