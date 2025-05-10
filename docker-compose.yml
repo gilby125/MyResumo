@@ -8,7 +8,6 @@ services:
       - API_KEY=${API_KEY}
       - API_BASE=${API_BASE}
       - MODEL_NAME=${MODEL_NAME}
-      - PYTHONPATH=/code
       - PORT=8080
     volumes:
       - .:/code
