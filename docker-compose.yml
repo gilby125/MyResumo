@@ -10,6 +10,9 @@ services:
       - MODEL_NAME=${MODEL_NAME}
       - PYTHONPATH=/code/app
       - PORT=8080
+    volumes:
+      - .:/app
+      - ./data:/app/data/templates  # Add template directory mount
     ports:
       - "8080"
     depends_on:
