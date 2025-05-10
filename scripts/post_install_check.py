@@ -5,13 +5,36 @@ import os
 import sys
 import logging
 from pathlib import Path
+import importlib
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    stream=sys.stdout  # Ensure logs go to stdout for Docker build logs
 )
 logger = logging.getLogger(__name__)
+
+def log_system_state():
+    logger.info(f"Current Working Directory: {os.getcwd()}")
+    logger.info(f"PYTHONPATH: {os.environ.get('PYTHONPATH')}")
+    logger.info(f"sys.path: {sys.path}")
+    
+    logger.info("Listing /code directory:")
+    code_dir = Path("/code")
+    if code_dir.exists() and code_dir.is_dir():
+        for item in os.listdir(code_dir):
+            logger.info(f"  - /code/{item}")
+    else:
+        logger.error("/code directory does not exist or is not a directory.")
+
+    logger.info("Listing /code/app directory:")
+    app_dir = Path("/code/app")
+    if app_dir.exists() and app_dir.is_dir():
+        for item in os.listdir(app_dir):
+            logger.info(f"  - /code/app/{item}")
+    else:
+        logger.error("/code/app directory does not exist or is not a directory.")
 
 def check_template_files():
     """Verify LaTeX template files exist and are accessible."""
@@ -35,20 +58,26 @@ def check_template_files():
 
 def check_python_imports():
     """Verify critical Python imports work."""
-    imports = [
-        'app.main',
-        'app.services.resume.latex_generator',
-        'fastapi',
-        'pymongo'
-    ]
+    imports_to_check = {
+        'app.main': "Main application module",
+        'app.services.resume.latex_generator': "LaTeX generator service",
+        'fastapi': "FastAPI framework",
+        'pymongo': "PyMongo MongoDB driver"
+    }
     
-    logger.info("Checking Python imports")
-    for imp in imports:
+    logger.info("Checking Python imports...")
+    all_imports_successful = True
+    for module_name, description in imports_to_check.items():
         try:
-            __import__(imp)
-            logger.info(f"Import successful: {imp}")
+            importlib.import_module(module_name)
+            logger.info(f"  Successfully imported '{module_name}' ({description})")
         except ImportError as e:
-            raise SystemExit(f"Import failed for {imp}: {str(e)}")
+            logger.error(f"  FAILED to import '{module_name}' ({description}): {e}")
+            all_imports_successful = False
+    
+    if not all_imports_successful:
+        raise SystemExit("One or more critical Python imports failed during build time.")
+    logger.info("All critical Python imports successful.")
 
 def check_env_vars():
     """Verify required environment variables are set."""
@@ -90,15 +119,16 @@ def check_directory_structure():
 
 def main():
     try:
-        logger.info("Starting MyResumo post-install validation")
+        logger.info("===== Starting MyResumo Post-Install Validation (Build Time) =====")
+        log_system_state()
         check_directory_structure()
         check_template_files()
-        check_python_imports()
+        check_python_imports() # This will try to import app.main
         check_env_vars()
-        logger.info("All post-install checks passed successfully")
+        logger.info("===== MyResumo Post-Install Validation (Build Time) PASSED =====")
     except Exception as e:
-        logger.error(f"Post-install validation failed: {str(e)}")
-        sys.exit(1)
+        logger.error(f"===== MyResumo Post-Install Validation (Build Time) FAILED: {e} =====")
+        sys.exit(1) # Ensure build fails if checks don't pass
 
 if __name__ == '__main__':
     main()

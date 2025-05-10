@@ -56,5 +56,9 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 # Run post-install checks (build will fail if checks don't pass)
 RUN python /code/scripts/post_install_check.py
 
-# Use uvicorn for production deployment with environment variable
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Create a wrapper script to log runtime environment then start uvicorn
+COPY ./scripts/start.sh /code/scripts/start.sh
+RUN chmod +x /code/scripts/start.sh
+
+# Use the wrapper script for production deployment
+CMD ["/code/scripts/start.sh"]
