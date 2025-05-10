@@ -58,4 +58,4 @@ RUN python /code/scripts/post_install_check.py
 
 # Use uvicorn for production deployment with environment variable
 # WORKDIR /code is already set
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["sh", "-c", "echo 'PYTHONPATH at CMD: $PYTHONPATH' && python -c 'import sys; print(\"sys.path at CMD:\", sys.path); import app.main' && uvicorn app.main:app --host 0.0.0.0 --port 8080"]
