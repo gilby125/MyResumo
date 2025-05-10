@@ -33,6 +33,7 @@ COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 # Copy application code
 COPY ./app /code/app
+COPY data/sample_latex_templates /app/data/sample_latex_templates
 
 # Create a non-root user and switch to it for security
 RUN addgroup --system app && \
