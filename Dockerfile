@@ -22,7 +22,8 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8080 \
-    API_BASE=""
+    API_BASE="" \
+    PYTHONPATH=/code:/code/app
 
 WORKDIR /code
 
