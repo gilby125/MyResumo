@@ -6,6 +6,8 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/myresumo
       - API_KEY=${API_KEY}
+      - API_BASE=${API_BASE}
+      - MODEL_NAME=${MODEL_NAME}
       - PYTHONPATH=/code/app
       - PORT=8080
     ports:
