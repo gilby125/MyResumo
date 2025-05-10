@@ -12,6 +12,14 @@ import re
 from datetime import datetime
 
 from jinja2 import Environment, FileSystemLoader
+import logging
+import os
+
+# Configure basic logging for this module if not already configured by the app
+# This helps ensure logs from this class are visible.
+if not logging.getLogger().hasHandlers():
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 
 class LaTeXGenerator:
@@ -58,40 +66,31 @@ class LaTeXGenerator:
         env : jinja2.Environment
             The Jinja2 environment for template rendering
         """
-        # Ensure os is imported if not already
-        import os
-        import logging
-        logger = logging.getLogger(__name__)
-
-        logger.info(f"LaTeXGenerator __init__ received template_dir: {template_dir}")
-        self.template_dir = template_dir
+        logger.info(f"LaTeXGenerator __init__ received template_dir: '{template_dir}'")
         
+        # Ensure the path is treated as absolute, especially within Docker context
+        # WORKDIR is /code, so if a relative path like 'app/services/...' is given,
+        # os.path.abspath will make it /code/app/services/...
+        # If an absolute path like '/code/app/services/...' is given, it remains absolute.
+        self.template_dir = os.path.abspath(template_dir)
+        logger.info(f"LaTeXGenerator __init__ using absolute template_dir: '{self.template_dir}'")
+
         if not os.path.exists(self.template_dir):
-            logger.warning(f"Primary template_dir '{self.template_dir}' not found. Trying fallback.")
-            fallback_dir = "app/services/resume/latex_templates" # This would be relative to WORKDIR if initial path fails
-            # For Docker, initial path should be absolute and exist. This fallback is more for local.
-            # If initial path is /code/app/services/resume/latex_templates, this check might be misleading in Docker.
-            # Let's check absolute version of fallback too.
-            abs_fallback_dir = os.path.abspath(fallback_dir)
-            logger.info(f"Fallback directory (relative): {fallback_dir}")
-            logger.info(f"Fallback directory (absolute): {abs_fallback_dir}")
-
-            if os.path.exists(fallback_dir): # Check relative to current WORKDIR
-                self.template_dir = fallback_dir
-                logger.info(f"Using relative fallback_dir: {self.template_dir}")
-            elif os.path.exists(abs_fallback_dir) and "/code/" in abs_fallback_dir : # Check if absolute path makes sense in container
-                self.template_dir = abs_fallback_dir
-                logger.info(f"Using absolute fallback_dir: {self.template_dir}")
+            logger.error(f"Template directory DOES NOT EXIST: '{self.template_dir}'")
+            # Listing content of parent directory for debugging if path is slightly off
+            parent_dir = os.path.dirname(self.template_dir)
+            if os.path.exists(parent_dir):
+                logger.error(f"Contents of parent directory '{parent_dir}': {os.listdir(parent_dir)}")
             else:
-                logger.error(f"Template directory not found: initial '{template_dir}', fallback '{fallback_dir}', abs_fallback '{abs_fallback_dir}'")
-                raise ValueError(f"Template directory not found: {template_dir} (and fallbacks also not found)")
+                logger.error(f"Parent directory '{parent_dir}' also does not exist.")
+            raise ValueError(f"Template directory not found: {self.template_dir}")
         
-        logger.info(f"LaTeXGenerator __init__ effective template_dir: {self.template_dir}")
-        logger.info(f"LaTeXGenerator __init__ absolute effective template_dir: {os.path.abspath(self.template_dir)}")
-
         if not os.listdir(self.template_dir):
-            logger.error(f"Template directory is empty: {self.template_dir}")
+            logger.error(f"Template directory IS EMPTY: '{self.template_dir}'")
             raise ValueError(f"Template directory is empty: {self.template_dir}")
+        
+        logger.info(f"Template directory '{self.template_dir}' exists and is not empty.")
+        logger.info(f"Contents of template directory '{self.template_dir}': {os.listdir(self.template_dir)}")
             
         self.json_data = None
         self.env = None
