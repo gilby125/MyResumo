@@ -51,5 +51,8 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 # Use uvicorn for production deployment
 # Expose the port before running the command
 
+# Run post-install checks (continue even if checks fail)
+RUN python scripts/post_install_check.py || echo "Post-install checks completed (some warnings may exist)"
+
 # Use uvicorn for production deployment with environment variable
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
