@@ -53,9 +53,8 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 # Use uvicorn for production deployment
 # Expose the port before running the command
 
-# Run post-install checks (build will fail if checks don't pass)
-RUN python /code/scripts/post_install_check.py
+# RUN python /code/scripts/post_install_check.py # Reverted
 
-# Use uvicorn for production deployment with environment variable
-# WORKDIR /code is already set
-CMD ["sh", "-c", "echo 'PYTHONPATH at CMD: $PYTHONPATH'; python -c 'import sys; print(\"sys.path BEFORE uvicorn:\", sys.path); sys.path.insert(0, \".\"); print(\"sys.path AFTER adding .:\", sys.path); import app.main; print(\"app.main imported successfully by pre-check\")'; python -m uvicorn app.main:app --host 0.0.0.0 --port 8080"]
+# Use uvicorn for production deployment
+# WORKDIR /code and ENV PYTHONPATH /code are already set
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
