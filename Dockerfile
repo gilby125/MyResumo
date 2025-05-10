@@ -23,7 +23,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8080 \
     API_BASE="" \
-    PYTHONPATH=/code:/code/app
+    PYTHONPATH=/code
 
 WORKDIR /code
 
@@ -32,10 +32,8 @@ COPY --from=builder /usr/local/lib/python3.11/site-packages/ /usr/local/lib/pyth
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 # Copy application code
-# Copy application code and templates
+# Copy application code
 COPY ./app /code/app
-RUN mkdir -p /code/app/services/resume/latex_templates && \
-    cp /code/app/services/resume/latex_templates/* /code/app/services/resume/latex_templates/
 
 # Create a non-root user and switch to it for security
 RUN addgroup --system app && \
@@ -51,4 +49,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # Use uvicorn for production deployment
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT}", "--root-path", "/code"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT}"]
