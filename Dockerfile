@@ -1,3 +1,4 @@
+
 # Use Python 3.11 slim variant to reduce image size
 FROM python:3.13-slim AS builder
 
@@ -51,5 +52,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
-# Use start.sh script as the entrypoint instead of direct uvicorn command
-CMD ["/code/scripts/start.sh"]
+# Use sh to run the script explicitly
+CMD ["sh", "/code/scripts/start.sh"]
