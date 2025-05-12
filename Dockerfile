@@ -1,5 +1,5 @@
 # Use Python 3.11 slim variant to reduce image size
-FROM python:3.11-slim AS builder
+FROM python:3.13-slim AS builder
 
 # Set working directory
 WORKDIR /app
@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Multi-stage build for a smaller final image
-FROM python:3.11-slim
+FROM python:3.13-slim   
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
