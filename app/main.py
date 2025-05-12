@@ -5,6 +5,8 @@ and handles application startup and shutdown events. It serves as the central
 coordination point for the entire application.
 """
 
+from datetime import datetime
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -99,7 +101,13 @@ app = FastAPI(
     docs_url=None,
     # Ensure all routes are included in the OpenAPI schema
     openapi_url="/openapi.json",
-    swagger_ui_parameters={"defaultModelsExpandDepth": -1},  # Hide schemas section by default
+    swagger_ui_parameters={
+        "defaultModelsExpandDepth": -1,  # Hide schemas section by default
+        "displayOperationId": True,      # Show operation IDs
+        "filter": True,                  # Enable filtering
+        "showExtensions": True,          # Show vendor extensions
+        "showCommonExtensions": True     # Show common extensions
+    },
 )
 
 
@@ -228,6 +236,15 @@ async def custom_swagger_ui_html():
         timestamp = int(time.time())
         openapi_url = f"/openapi.json?t={timestamp}"
 
+        # Log that we're serving the Swagger UI
+        print(f"Serving Swagger UI with OpenAPI schema URL: {openapi_url}")
+
+        # Ensure all routers are included in the schema
+        # This is a workaround for FastAPI sometimes not including all routers
+        for router in app.routes:
+            if hasattr(router, "include_in_schema"):
+                router.include_in_schema = True
+
         return HTMLResponse(
             template.replace("{{ title }}", "MyResumo API Documentation").replace(
                 "{{ openapi_url }}", openapi_url
@@ -238,6 +255,7 @@ async def custom_swagger_ui_html():
             content="Custom Swagger template not found", status_code=500
         )
     except Exception as e:
+        print(f"Error loading Swagger documentation: {str(e)}")
         return HTMLResponse(
             content=f"Error loading documentation: {str(e)}", status_code=500
         )
@@ -256,11 +274,48 @@ async def health_check():
     )
 
 
+@app.get("/api/schema", tags=["Development"], summary="Get OpenAPI Schema", include_in_schema=False)
+async def get_openapi_schema():
+    """Get the OpenAPI schema directly as JSON.
+
+    This is useful for debugging issues with the Swagger UI.
+
+    Returns:
+    -------
+        JSONResponse: The complete OpenAPI schema
+    """
+    # Force regeneration of the OpenAPI schema
+    openapi_schema = app.openapi()
+
+    # Check if prompts endpoints are included
+    has_prompts = False
+    for path in openapi_schema.get("paths", {}):
+        if path.startswith("/api/prompts"):
+            has_prompts = True
+            break
+
+    # Add a debug field
+    openapi_schema["_debug"] = {
+        "has_prompts_endpoints": has_prompts,
+        "generated_at": datetime.now().isoformat(),
+        "app_version": app.version
+    }
+
+    return JSONResponse(content=openapi_schema)
+
+
 # Include routers - These must come BEFORE the catch-all route
 # API routers first to ensure they're included in the OpenAPI schema
-app.include_router(prompts_router, include_in_schema=True)  # Add prompts management API endpoints
-app.include_router(resume_router)
-app.include_router(token_usage_router)  # Add token usage tracking API endpoints
+# Explicitly set include_in_schema=True for all API routers
+app.include_router(
+    prompts_router,
+    include_in_schema=True,
+    prefix="/api/prompts",  # Ensure prefix is set correctly
+    tags=["Prompts"]        # Ensure tag is set correctly
+)  # Add prompts management API endpoints
+
+app.include_router(resume_router, include_in_schema=True)
+app.include_router(token_usage_router, include_in_schema=True)  # Add token usage tracking API endpoints
 
 # Web routers
 app.include_router(core_web_router)

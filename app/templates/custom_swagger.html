@@ -62,8 +62,14 @@
         }
 
         window.onload = function() {
+            // Force a fresh load of the OpenAPI schema with a timestamp
+            const timestamp = new Date().getTime();
+            const openapi_url = "{{ openapi_url }}".includes("?")
+                ? "{{ openapi_url }}&t=" + timestamp
+                : "{{ openapi_url }}?t=" + timestamp;
+
             const ui = SwaggerUIBundle({
-                url: "{{ openapi_url }}",
+                url: openapi_url,
                 dom_id: '#swagger-ui',
                 deepLinking: true,
                 presets: [
@@ -80,7 +86,9 @@
                 filter: true,
                 tryItOutEnabled: true,
                 tagsSorter: "alpha",   // Sort tags alphabetically
-                operationsSorter: "alpha"  // Sort operations alphabetically
+                operationsSorter: "alpha",  // Sort operations alphabetically
+                showExtensions: true,  // Show vendor extensions
+                showCommonExtensions: true  // Show common extensions
             });
             window.ui = ui;
         }
