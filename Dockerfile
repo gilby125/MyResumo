@@ -35,15 +35,15 @@ COPY --from=builder /usr/local/bin/ /usr/local/bin/
 # Copy application code
 COPY ./app /code/app
 
+# Copy the start script and set permissions BEFORE switching users
+COPY ./scripts/start.sh /code/scripts/start.sh
+RUN chmod +x /code/scripts/start.sh
+
 # Create a non-root user and switch to it for security
 RUN addgroup --system app && \
     adduser --system --group app && \
     chown -R app:app /code
 USER app
-
-# Copy the start script
-COPY ./scripts/start.sh /code/scripts/start.sh
-RUN chmod +x /code/scripts/start.sh
 
 # Expose the port the app runs on
 EXPOSE 8080
