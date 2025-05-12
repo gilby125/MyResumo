@@ -39,6 +39,10 @@ async def startup_logic(app: FastAPI) -> None:
         Exception: If any startup operation fails
     """
     try:
+        # Clear the OpenAPI schema to ensure it's regenerated with all routes
+        app.openapi_schema = None
+        print("OpenAPI schema cleared for regeneration")
+
         # Initialize database connection
         connection_manager = MongoConnectionManager()
         app.state.mongo = connection_manager
@@ -228,6 +232,9 @@ async def custom_swagger_ui_html():
         FileNotFoundError: If the custom Swagger template is not found
     """
     try:
+        # Clear the OpenAPI schema to force regeneration
+        app.openapi_schema = None
+
         with open("app/templates/custom_swagger.html") as f:
             template = f.read()
 
@@ -244,6 +251,17 @@ async def custom_swagger_ui_html():
         for router in app.routes:
             if hasattr(router, "include_in_schema"):
                 router.include_in_schema = True
+
+        # Verify that prompts endpoints are included in the schema
+        openapi_schema = app.openapi()
+        has_prompts = False
+        for path in openapi_schema.get("paths", {}):
+            if path.startswith("/api/prompts"):
+                has_prompts = True
+                print(f"Found prompts endpoint: {path}")
+
+        if not has_prompts:
+            print("WARNING: No prompts endpoints found in the OpenAPI schema!")
 
         return HTMLResponse(
             template.replace("{{ title }}", "MyResumo API Documentation").replace(
@@ -285,6 +303,7 @@ async def get_openapi_schema():
         JSONResponse: The complete OpenAPI schema
     """
     # Force regeneration of the OpenAPI schema
+    app.openapi_schema = None  # Clear the cached schema
     openapi_schema = app.openapi()
 
     # Check if prompts endpoints are included
@@ -304,14 +323,38 @@ async def get_openapi_schema():
     return JSONResponse(content=openapi_schema)
 
 
+@app.get("/api/refresh-schema", tags=["Development"], summary="Refresh OpenAPI Schema", include_in_schema=False)
+async def refresh_openapi_schema():
+    """Force refresh the OpenAPI schema and redirect to the Swagger UI.
+
+    This is useful for fixing issues with the Swagger UI not showing all endpoints.
+
+    Returns:
+    -------
+        RedirectResponse: Redirect to the Swagger UI
+    """
+    # Clear the cached schema to force regeneration
+    app.openapi_schema = None
+
+    # Log that we're refreshing the schema
+    print("Manually refreshing OpenAPI schema")
+
+    # Ensure all routers are included in the schema
+    for router in app.routes:
+        if hasattr(router, "include_in_schema"):
+            router.include_in_schema = True
+
+    # Redirect to the Swagger UI
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/docs")
+
+
 # Include routers - These must come BEFORE the catch-all route
 # API routers first to ensure they're included in the OpenAPI schema
 # Explicitly set include_in_schema=True for all API routers
 app.include_router(
     prompts_router,
-    include_in_schema=True,
-    prefix="/api/prompts",  # Ensure prefix is set correctly
-    tags=["Prompts"]        # Ensure tag is set correctly
+    include_in_schema=True
 )  # Add prompts management API endpoints
 
 app.include_router(resume_router, include_in_schema=True)
