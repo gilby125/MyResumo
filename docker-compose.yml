@@ -10,10 +10,12 @@ services:
       - MODEL_NAME=${MODEL_NAME}
       - PORT=8080
     ports:
-      - "8080"
+      - "8080:8080"
     depends_on:
       mongodb:
         condition: service_healthy
+    volumes:
+      - ./user_files:/code/user_files
     networks:
       - myresumo-net
 
