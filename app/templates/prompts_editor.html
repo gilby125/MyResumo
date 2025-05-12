@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Prompts Editor - MyResumo{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8" x-data="promptsEditor()">
+    <div class="px-4 py-6 sm:px-0">
+        <h1 class="text-2xl font-semibold text-gray-900">Prompts Editor</h1>
+        <p class="mt-1 text-sm text-gray-600">View and edit system prompts used by the AI components.</p>
+
+        <!-- Loading indicator -->
+        <div x-show="loading" class="flex justify-center my-8">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        </div>
+
+        <!-- Error message -->
+        <div x-show="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4" role="alert">
+            <strong class="font-bold">Error!</strong>
+            <span class="block sm:inline" x-text="error"></span>
+        </div>
+
+        <!-- Prompts list -->
+        <div x-show="!loading && !currentPrompt" class="mt-6">
+            <div class="flex justify-between mb-4">
+                <h2 class="text-xl font-medium text-gray-900">Available Prompts</h2>
+                <button @click="initializeDefaultPrompts" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    Initialize Default Prompts
+                </button>
+            </div>
+
+            <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                <ul class="divide-y divide-gray-200">
+                    <template x-for="prompt in prompts" :key="prompt.id">
+                        <li>
+                            <div class="px-4 py-4 sm:px-6 hover:bg-gray-50 cursor-pointer" @click="editPrompt(prompt)">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm font-medium text-primary-600 truncate" x-text="prompt.name"></p>
+                                    <div class="ml-2 flex-shrink-0 flex">
+                                        <p class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                           :class="prompt.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                                           x-text="prompt.is_active ? 'Active' : 'Inactive'"></p>
+                                    </div>
+                                </div>
+                                <div class="mt-2 sm:flex sm:justify-between">
+                                    <div class="sm:flex">
+                                        <p class="flex items-center text-sm text-gray-500">
+                                            <span x-text="prompt.description"></span>
+                                        </p>
+                                    </div>
+                                    <div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                                        <p>Component: <span class="font-medium" x-text="prompt.component"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Prompt editor -->
+        <div x-show="!loading && currentPrompt" class="mt-6">
+            <div class="flex justify-between mb-4">
+                <h2 class="text-xl font-medium text-gray-900">Edit Prompt: <span x-text="currentPrompt.name"></span></h2>
+                <button @click="currentPrompt = null" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                    Back to List
+                </button>
+            </div>
+
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                            <input type="text" name="description" id="description" x-model="currentPrompt.description"
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                        </div>
+
+                        <div>
+                            <label for="template" class="block text-sm font-medium text-gray-700">Template</label>
+                            <textarea name="template" id="template" rows="10" x-model="currentPrompt.template"
+                                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"></textarea>
+                            <p class="mt-2 text-sm text-gray-500">Use {{variable}} syntax for variables.</p>
+                        </div>
+
+                        <div>
+                            <label for="variables" class="block text-sm font-medium text-gray-700">Variables</label>
+                            <div class="mt-1 flex flex-wrap gap-2">
+                                <template x-for="(variable, index) in currentPrompt.variables" :key="index">
+                                    <div class="flex items-center bg-gray-100 rounded-md px-3 py-1">
+                                        <span x-text="variable"></span>
+                                        <button @click="removeVariable(index)" class="ml-2 text-red-500 hover:text-red-700">
+                                            &times;
+                                        </button>
+                                    </div>
+                                </template>
+                                <div class="flex">
+                                    <input type="text" x-model="newVariable" placeholder="Add variable"
+                                           class="border border-gray-300 rounded-l-md shadow-sm py-1 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                                    <button @click="addVariable()" class="bg-primary-600 text-white rounded-r-md px-3 py-1 hover:bg-primary-700">
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input type="checkbox" name="is_active" id="is_active" x-model="currentPrompt.is_active"
+                                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                            <label for="is_active" class="ml-2 block text-sm text-gray-900">Active</label>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button @click="savePrompt()" class="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function promptsEditor() {
+        return {
+            loading: true,
+            error: null,
+            prompts: [],
+            currentPrompt: null,
+            newVariable: '',
+
+            init() {
+                this.fetchPrompts();
+            },
+
+            fetchPrompts() {
+                this.loading = true;
+                this.error = null;
+
+                fetch('/api/prompts-direct')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        this.prompts = data.prompts;
+                        this.loading = false;
+                    })
+                    .catch(error => {
+                        this.error = `Failed to load prompts: ${error.message}`;
+                        this.loading = false;
+                    });
+            },
+
+            editPrompt(prompt) {
+                // Create a deep copy to avoid modifying the original
+                this.currentPrompt = JSON.parse(JSON.stringify(prompt));
+            },
+
+            addVariable() {
+                if (this.newVariable.trim() === '') return;
+
+                if (!this.currentPrompt.variables) {
+                    this.currentPrompt.variables = [];
+                }
+
+                if (!this.currentPrompt.variables.includes(this.newVariable)) {
+                    this.currentPrompt.variables.push(this.newVariable);
+                }
+
+                this.newVariable = '';
+            },
+
+            removeVariable(index) {
+                this.currentPrompt.variables.splice(index, 1);
+            },
+
+            savePrompt() {
+                this.loading = true;
+                this.error = null;
+
+                const updateData = {
+                    description: this.currentPrompt.description,
+                    template: this.currentPrompt.template,
+                    variables: this.currentPrompt.variables,
+                    is_active: this.currentPrompt.is_active
+                };
+
+                fetch(`/api/prompts-direct/${this.currentPrompt.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Update was successful, refresh the prompts list
+                        this.fetchPrompts();
+                        this.currentPrompt = null;
+                    } else {
+                        throw new Error('Update failed');
+                    }
+                })
+                .catch(error => {
+                    this.error = `Failed to save prompt: ${error.message}`;
+                    this.loading = false;
+                });
+            },
+
+            initializeDefaultPrompts() {
+                if (!confirm('This will reset all prompts to their default values. Continue?')) {
+                    return;
+                }
+
+                this.loading = true;
+                this.error = null;
+
+                fetch('/api/prompts-direct/initialize', {
+                    method: 'POST'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Initialization was successful, refresh the prompts list
+                        this.fetchPrompts();
+                    } else {
+                        throw new Error('Initialization failed');
+                    }
+                })
+                .catch(error => {
+                    this.error = `Failed to initialize default prompts: ${error.message}`;
+                    this.loading = false;
+                });
+            }
+        };
+    }
+</script>
+{% endblock %}

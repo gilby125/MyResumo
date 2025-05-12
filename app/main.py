@@ -292,6 +292,144 @@ async def health_check():
     )
 
 
+# Direct API endpoints for prompts management
+@app.get("/api/prompts-direct", tags=["Prompts"], summary="Get all prompts (direct)")
+async def get_all_prompts_direct():
+    """Get all prompt templates directly.
+
+    This endpoint bypasses the router to ensure it's included in the OpenAPI schema.
+
+    Returns:
+    -------
+        JSONResponse: List of all prompts
+    """
+    try:
+        from app.database.repositories.prompt_repository import PromptRepository
+        repo = PromptRepository()
+        prompts = await repo.get_all_prompts()
+
+        # Format response
+        from app.api.routers.prompts import PromptResponse
+        formatted_prompts = []
+        for prompt in prompts:
+            prompt["id"] = prompt.get("id")  # Ensure ID is a string
+            formatted_prompts.append(PromptResponse(**prompt))
+
+        return {"prompts": formatted_prompts}
+    except Exception as e:
+        print(f"Error retrieving prompts: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error retrieving prompts: {str(e)}"}
+        )
+
+
+@app.put("/api/prompts-direct/{prompt_id}", tags=["Prompts"], summary="Update a prompt (direct)")
+async def update_prompt_direct(prompt_id: str, update_data: dict):
+    """Update a specific prompt by ID directly.
+
+    This endpoint bypasses the router to ensure it's included in the OpenAPI schema.
+
+    Args:
+        prompt_id: ID of the prompt to update
+        update_data: Data to update in the prompt
+
+    Returns:
+    -------
+        JSONResponse: Success status
+    """
+    try:
+        from app.database.repositories.prompt_repository import PromptRepository
+        from app.database.models.prompt import PromptUpdate
+
+        repo = PromptRepository()
+
+        # Check if prompt exists
+        prompt = await repo.get_prompt_by_id(prompt_id)
+        if not prompt:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": f"Prompt with ID {prompt_id} not found"}
+            )
+
+        # Convert to PromptUpdate model
+        prompt_update = PromptUpdate(**update_data)
+
+        # Update prompt
+        success = await repo.update_prompt(prompt_id, prompt_update)
+        if not success:
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Failed to update prompt"}
+            )
+
+        return {"success": True}
+    except Exception as e:
+        print(f"Error updating prompt: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error updating prompt: {str(e)}"}
+        )
+
+
+@app.post("/api/prompts-direct/initialize", tags=["Prompts"], summary="Initialize default prompts (direct)")
+async def initialize_default_prompts_direct():
+    """Initialize the database with default prompts directly.
+
+    This endpoint bypasses the router to ensure it's included in the OpenAPI schema.
+
+    Returns:
+    -------
+        JSONResponse: Success status
+    """
+    try:
+        from app.database.repositories.prompt_repository import PromptRepository
+        repo = PromptRepository()
+        await repo.initialize_default_prompts()
+        return {"success": True}
+    except Exception as e:
+        print(f"Error initializing default prompts: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error initializing default prompts: {str(e)}"}
+        )
+
+
+@app.get("/api/prompts-direct/{prompt_id}", tags=["Prompts"], summary="Get a prompt by ID (direct)")
+async def get_prompt_direct(prompt_id: str):
+    """Get a specific prompt by ID directly.
+
+    This endpoint bypasses the router to ensure it's included in the OpenAPI schema.
+
+    Args:
+        prompt_id: ID of the prompt to retrieve
+
+    Returns:
+    -------
+        JSONResponse: Prompt details
+    """
+    try:
+        from app.database.repositories.prompt_repository import PromptRepository
+        from app.api.routers.prompts import PromptResponse
+
+        repo = PromptRepository()
+        prompt = await repo.get_prompt_by_id(prompt_id)
+
+        if not prompt:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": f"Prompt with ID {prompt_id} not found"}
+            )
+
+        return PromptResponse(**prompt)
+    except Exception as e:
+        print(f"Error retrieving prompt: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error retrieving prompt: {str(e)}"}
+        )
+
+
 @app.get("/api/schema", tags=["Development"], summary="Get OpenAPI Schema", include_in_schema=False)
 async def get_openapi_schema():
     """Get the OpenAPI schema directly as JSON.
@@ -363,6 +501,23 @@ app.include_router(token_usage_router, include_in_schema=True)  # Add token usag
 # Web routers
 app.include_router(core_web_router)
 app.include_router(web_router)
+
+# Direct route for prompts editor
+@app.get("/prompts", tags=["Web"], include_in_schema=False)
+async def prompts_editor_page(request: Request):
+    """Render the prompts editor page.
+
+    This page allows administrators to view and edit the system prompts
+    used by the AI components.
+
+    Args:
+        request: The incoming HTTP request
+
+    Returns:
+    -------
+        HTMLResponse: The rendered prompts editor page
+    """
+    return templates.TemplateResponse("prompts_editor.html", {"request": request})
 
 
 # Catch-all for not found pages - IMPORTANT: This must come AFTER including all routers
