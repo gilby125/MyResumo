@@ -40,6 +40,10 @@ RUN addgroup --system app && \
     chown -R app:app /code
 USER app
 
+# Copy the start script
+COPY ./scripts/start.sh /code/scripts/start.sh
+RUN chmod +x /code/scripts/start.sh
+
 # Expose the port the app runs on
 EXPOSE 8080
 
@@ -47,5 +51,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
-# Use uvicorn for production deployment (using shell form)
-CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
+# Use start.sh script as the entrypoint instead of direct uvicorn command
+CMD ["/code/scripts/start.sh"]
