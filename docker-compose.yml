@@ -23,6 +23,9 @@ services:
     image: mongo:latest
     volumes:
       - mongo_data:/data/db
+    ports:
+      - "27017:27017"  # Expose MongoDB port to host
+    command: ["mongod", "--bind_ip_all"]  # Allow connections from any IP
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 5s
