@@ -187,10 +187,11 @@ class LaTeXGenerator:
         """Convert a date string to a formatted date.
 
         Takes a date string in format 'mm/yyyy' and converts it to 'Mon. YYYY' format.
+        Also handles year-only dates like '2017'.
 
         Args:
             date_str (str): The date string to format, typically in 'mm/yyyy' format.
-                        Can also be 'present' (case insensitive) or empty.
+                        Can also be 'present' (case insensitive), empty, or just a year.
 
         Returns:
         -------
@@ -201,11 +202,20 @@ class LaTeXGenerator:
             return "Present"
 
         try:
+            # Try to parse as mm/yyyy
             date_obj = datetime.strptime(date_str, "%m/%Y")
             return date_obj.strftime("%b. %Y")
-        except Exception as e:
-            print(f"Error formatting date: {e}")
-            return date_str
+        except ValueError:
+            # If that fails, try to parse as just a year
+            try:
+                if date_str.isdigit() and len(date_str) == 4:
+                    return date_str  # Just return the year as is
+                else:
+                    print(f"Error formatting date: {date_str} is not in expected format")
+                    return date_str
+            except Exception as e:
+                print(f"Error formatting date: {e}")
+                return date_str
 
     @staticmethod
     def bold_numbers(text) -> str:
@@ -391,7 +401,7 @@ class LaTeXGenerator:
     <% for item in job.highlights %>
     \item << item | latex_escape | bold_numbers >>
     <% endfor %>
-\end{itemize>
+\end{itemize}
 <% endfor %>
 
 \section*{Education}
@@ -401,7 +411,7 @@ class LaTeXGenerator:
 <% if edu.gpa %>
 \begin{itemize}[leftmargin=*]
     \item GPA: << edu.gpa | latex_escape | bold_numbers >>
-\end{itemize>
+\end{itemize}
 <% endif %>
 <% endfor %>
 

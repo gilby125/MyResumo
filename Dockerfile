@@ -26,6 +26,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     API_BASE="" \
     PYTHONPATH=/code
 
+# Install LaTeX and other required packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    texlive-latex-base \
+    texlive-fonts-recommended \
+    texlive-latex-extra \
+    curl \
+    poppler-utils \
+    tesseract-ocr \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /code
 
 # Copy installed packages from builder stage
