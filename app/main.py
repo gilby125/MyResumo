@@ -40,15 +40,35 @@ async def startup_logic(app: FastAPI) -> None:
         # Initialize database connection
         connection_manager = MongoConnectionManager()
         app.state.mongo = connection_manager
+        print("MongoDB connection manager initialized")
 
         # Initialize default prompts
-        from app.database.repositories.prompt_repository import PromptRepository
-        prompt_repo = PromptRepository()
-        await prompt_repo.initialize_default_prompts()
-        print("Default prompts initialized successfully")
+        try:
+            from app.database.repositories.prompt_repository import PromptRepository
+            prompt_repo = PromptRepository()
+            print(f"MongoDB URL: {prompt_repo.connection_string}")
+
+            # Test MongoDB connection
+            try:
+                # Try a simple operation to test the connection
+                await prompt_repo.get_all_prompts()
+                print("MongoDB connection test successful")
+            except Exception as conn_err:
+                print(f"MongoDB connection test failed: {conn_err}")
+
+            # Try to initialize default prompts
+            try:
+                await prompt_repo.initialize_default_prompts()
+                print("Default prompts initialized successfully")
+            except Exception as prompt_err:
+                print(f"Failed to initialize default prompts: {prompt_err}")
+                # Continue anyway - we'll handle errors in the API endpoints
+        except Exception as repo_err:
+            print(f"Error initializing prompt repository: {repo_err}")
     except Exception as e:
         print(f"Error during startup: {e}")
-        raise
+        # Don't raise the exception - let the application start anyway
+        # We'll handle errors in the API endpoints
 
 
 async def shutdown_logic(app: FastAPI) -> None:

@@ -77,7 +77,16 @@ async def get_prompt_repository() -> PromptRepository:
     -------
         PromptRepository: An instance of the prompt repository
     """
-    return PromptRepository()
+    try:
+        repo = PromptRepository()
+        # Test connection by making a simple query
+        await repo.get_all_prompts()
+        return repo
+    except Exception as e:
+        logger.error(f"Failed to initialize prompt repository: {str(e)}")
+        # Return the repository anyway to allow the API to be documented
+        # Operations will fail at runtime but will be included in the OpenAPI schema
+        return PromptRepository()
 
 
 @prompts_router.get(
