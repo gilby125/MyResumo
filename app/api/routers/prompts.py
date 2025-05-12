@@ -62,7 +62,11 @@ class UpdatePromptRequest(BaseModel):
 
 
 # Create router
-prompts_router = APIRouter(prefix="/api/prompts", tags=["Prompts"])
+prompts_router = APIRouter(
+    prefix="/api/prompts",
+    tags=["Prompts"],
+    include_in_schema=True  # Explicitly include in OpenAPI schema
+)
 
 
 async def get_prompt_repository() -> PromptRepository:
@@ -102,13 +106,13 @@ async def get_all_prompts(
             prompts = await repo.get_prompts_by_component(component)
         else:
             prompts = await repo.get_all_prompts(include_inactive)
-        
+
         # Format response
         formatted_prompts = []
         for prompt in prompts:
             prompt["id"] = prompt.get("id")  # Ensure ID is a string
             formatted_prompts.append(PromptResponse(**prompt))
-        
+
         return {"prompts": formatted_prompts}
     except Exception as e:
         logger.error(f"Error retrieving prompts: {str(e)}")
@@ -209,10 +213,10 @@ async def update_prompt(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Prompt with ID {prompt_id} not found",
         )
-    
+
     # Convert to PromptUpdate model
     prompt_update = PromptUpdate(**update_data.model_dump(exclude_unset=True))
-    
+
     # Update prompt
     success = await repo.update_prompt(prompt_id, prompt_update)
     if not success:
@@ -220,7 +224,7 @@ async def update_prompt(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update prompt",
         )
-    
+
     return {"success": True}
 
 

@@ -43,22 +43,32 @@ class MongoConnectionManager:
         "retryWrites": True,
     }
 
-    def __new__(cls):
+    def __new__(cls, connection_string=None):
         """Singleton implementation ensuring only one instance is created.
+
+        Args:
+            connection_string: Optional MongoDB connection string
 
         Returns:
             The singleton MongoConnectionManager instance
         """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            # Store the connection string for initialization
+            cls._instance._init_connection_string = connection_string
         return cls._instance
 
-    def __init__(self):
+    def __init__(self, connection_string=None):
         """Initialize the MongoConnectionManager with the connection string.
+
+        Args:
+            connection_string: Optional MongoDB connection string to override the default
 
         The initialization only happens once due to the singleton pattern.
         """
-        self.url = MONGODB_URI
+        # Only set the URL if it hasn't been set before or if a new connection string is provided
+        if not hasattr(self, 'url') or connection_string:
+            self.url = connection_string or MONGODB_URI
 
     async def get_client(self) -> motor.motor_asyncio.AsyncIOMotorClient:
         """Get the MongoDB client instance, creating it if it doesn't exist.

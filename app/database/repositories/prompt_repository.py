@@ -27,14 +27,17 @@ class PromptRepository(BaseRepository):
         self,
         db_name: str = os.getenv("DB_NAME", "myresumo"),
         collection_name: str = "prompts",
+        connection_string: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017"),
     ):
         """Initialize the prompt repository with database and collection names.
 
         Args:
             db_name (str): Name of the database. Defaults to environment variable or "myresumo".
             collection_name (str): Name of the collection. Defaults to "prompts".
+            connection_string (str): MongoDB connection string. Defaults to environment variable or localhost.
         """
-        super().__init__(db_name, collection_name)
+        # Pass the connection string to the base repository
+        super().__init__(db_name, collection_name, connection_string=connection_string)
 
     async def create_prompt(self, prompt: PromptTemplate) -> str:
         """Create a new prompt template in the database.
@@ -158,7 +161,8 @@ class PromptRepository(BaseRepository):
 
         # Create a temporary instance to get the prompt templates
         ats_scorer = ATSScorerLLM.__new__(ATSScorerLLM)
-        ats_scorer.setup_prompts()
+        # Initialize with default prompts directly
+        ats_scorer._setup_default_prompts()
 
         # Get the resume optimization template
         # We need to extract the template from the method since it's dynamically generated

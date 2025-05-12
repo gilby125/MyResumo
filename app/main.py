@@ -77,6 +77,8 @@ app = FastAPI(
     license_info={"name": "MIT License", "url": "https://opensource.org/licenses/MIT"},
     version="2.0.0",
     docs_url=None,
+    # Ensure all routes are included in the OpenAPI schema
+    openapi_url="/openapi.json",
 )
 
 
@@ -200,9 +202,14 @@ async def custom_swagger_ui_html():
         with open("app/templates/custom_swagger.html") as f:
             template = f.read()
 
+        # Force reload the OpenAPI schema by adding a timestamp parameter
+        import time
+        timestamp = int(time.time())
+        openapi_url = f"/openapi.json?t={timestamp}"
+
         return HTMLResponse(
             template.replace("{{ title }}", "MyResumo API Documentation").replace(
-                "{{ openapi_url }}", "/openapi.json"
+                "{{ openapi_url }}", openapi_url
             )
         )
     except FileNotFoundError:
@@ -229,9 +236,12 @@ async def health_check():
 
 
 # Include routers - These must come BEFORE the catch-all route
+# API routers first to ensure they're included in the OpenAPI schema
+app.include_router(prompts_router)  # Add prompts management API endpoints
 app.include_router(resume_router)
 app.include_router(token_usage_router)  # Add token usage tracking API endpoints
-app.include_router(prompts_router)  # Add prompts management API endpoints
+
+# Web routers
 app.include_router(core_web_router)
 app.include_router(web_router)
 

@@ -25,16 +25,22 @@ class BaseRepository:
         connection_manager: Instance of MongoDB connection manager
     """
 
-    def __init__(self, db_name: str, collection_name: str):
+    def __init__(
+        self,
+        db_name: str,
+        collection_name: str,
+        connection_string: str = None
+    ):
         """Initialize the BaseRepository with database and collection names.
 
         Args:
             db_name (str): The name of the database.
             collection_name (str): The name of the collection.
+            connection_string (str, optional): MongoDB connection string. Defaults to None.
         """
         self.db_name = db_name or os.getenv("DB_NAME", "myresumo")
         self.collection_name = collection_name
-        self.connection_manager = MongoConnectionManager()
+        self.connection_manager = MongoConnectionManager(connection_string=connection_string)
 
     async def find_one(self, query: Dict) -> Optional[Dict]:
         """Find a single document matching the query.
