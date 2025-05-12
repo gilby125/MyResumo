@@ -85,7 +85,7 @@ class AtsResumeOptimizer:
         self.llm = self._get_openai_model()
         self.output_parser = JsonOutputParser()
         self.chain = None
-        
+
         # Initialize ATS scorer for skill extraction and analysis
         self.ats_scorer = None
         if self.api_key and self.api_base and self.model_name:
@@ -100,7 +100,7 @@ class AtsResumeOptimizer:
 
     def _get_openai_model(self) -> ChatOpenAI:
         """Initialize the OpenAI model with appropriate settings.
-        
+
         Returns:
             ChatOpenAI: Configured language model instance with token tracking
         """
@@ -119,9 +119,28 @@ class AtsResumeOptimizer:
             # Fallback to standard model if no specific model is configured
             return ChatOpenAI(temperature=0)
 
+    async def _get_prompt_template_from_db(self) -> Optional[str]:
+        """Attempt to load the resume optimization prompt template from the database.
+
+        Returns:
+            Optional[str]: The prompt template string if found, None otherwise.
+        """
+        try:
+            from app.database.repositories.prompt_repository import PromptRepository
+            repo = PromptRepository()
+
+            # Get resume optimization prompt
+            prompt = await repo.get_prompt_by_name("resume_optimization")
+            if prompt:
+                return prompt["template"]
+            return None
+        except Exception as e:
+            print(f"Error loading prompt from database: {e}")
+            return None
+
     def _get_prompt_template(self, missing_skills: Optional[List[str]] = None) -> PromptTemplate:
         """Create the PromptTemplate for ATS resume optimization.
-        
+
         Args:
             missing_skills: A list of skills identified as missing from the resume
                         that should be incorporated if the candidate has them.
@@ -129,16 +148,17 @@ class AtsResumeOptimizer:
         Returns:
             PromptTemplate: A prompt template with instructions for resume optimization.
         """
+        # Create the recommended skills section if applicable
         recommended_skills_section = ""
         if missing_skills and len(missing_skills) > 0:
             skills_list = ", ".join([f"'{skill}'" for skill in missing_skills])
             recommended_skills_section = f"""
         ## RECOMMENDED SKILLS TO ADD
-        
+
         The following skills were identified as potentially valuable for this position but may be missing or not prominently featured in the resume:
-        
+
         {skills_list}
-        
+
         If the candidate has any experience with these skills, even minor exposure:
         - Highlight them prominently in the skills section
         - Look for ways to showcase these skills in past experience descriptions
@@ -148,11 +168,12 @@ class AtsResumeOptimizer:
         - Be assertive in surfacing any relevant experience, even if it is not an exact match, as long as it is truthful
         - Do NOT fabricate experience with these skills, only highlight them if they exist
         """
-        
+
+        # Use the default template
         template = f"""
         # ROLE: Expert ATS Resume Optimization Specialist
         You are an expert ATS (Applicant Tracking System) Resume Optimizer with specialized knowledge in resume writing, keyword optimization, and applicant tracking systems. Your task is to transform the candidate's existing resume into a highly optimized version tailored specifically to the provided job description, maximizing the candidate's chances of passing through ATS filters while maintaining honesty and accuracy.
-        
+
         ## INPUT DATA:
 
         ### JOB DESCRIPTION:
@@ -160,7 +181,7 @@ class AtsResumeOptimizer:
 
         ### CANDIDATE'S CURRENT RESUME:
         {{resume}}
-        
+
         {recommended_skills_section}
 
         ## OPTIMIZATION PROCESS:
@@ -301,7 +322,7 @@ class AtsResumeOptimizer:
 
         This method configures the functional composition approach with the pipe operator
         to create a processing chain from prompt template to language model.
-        
+
         Args:
             missing_skills: List of skills identified as missing that should be incorporated
                         into the optimization prompt.
@@ -309,7 +330,7 @@ class AtsResumeOptimizer:
         prompt_template = self._get_prompt_template(missing_skills)
         self.chain = prompt_template | self.llm
 
-    def generate_ats_optimized_resume_json(
+    async def generate_ats_optimized_resume_json(
         self, job_description: str
     ) -> Dict[str, Any]:
         """Generate an ATS-optimized resume in JSON format.
@@ -332,19 +353,27 @@ class AtsResumeOptimizer:
         try:
             missing_skills = []
             score_results = {}
-            
+
             # Step 1: Analyze resume against job description to identify skill gaps
             if self.ats_scorer:
                 try:
-                    score_results = self.ats_scorer.compute_match_score(
-                        self.resume, job_description
-                    )
+                    # Use async compute_match_score if available
+                    if hasattr(self.ats_scorer, "compute_match_score") and callable(getattr(self.ats_scorer, "compute_match_score")):
+                        score_results = await self.ats_scorer.compute_match_score(
+                            self.resume, job_description
+                        )
+                    else:
+                        # Fall back to sync method if async not available
+                        score_results = self.ats_scorer.compute_match_score_sync(
+                            self.resume, job_description
+                        )
+
                     missing_skills = score_results.get("missing_skills", [])
                     matching_skills = score_results.get("matching_skills", [])
-                    
+
                     # Reconfigure processing chain with identified missing skills
                     self._setup_chain(missing_skills)
-                    
+
                     print(f"Initial ATS Score: {score_results.get('final_score', 'N/A')}%")
                     print(f"Found {len(missing_skills)} missing skills to incorporate")
                     print(f"Found {len(matching_skills)} matching skills to emphasize")
@@ -352,10 +381,54 @@ class AtsResumeOptimizer:
                     print(f"Warning: ATS scoring failed, proceeding without skill recommendations: {str(e)}")
                     pass
 
-            # Step 2: Generate optimized resume using LLM
-            result = self.chain.invoke(
-                {"job_description": job_description, "resume": self.resume}
-            )
+            # Try to load prompt from database
+            try:
+                db_template = await self._get_prompt_template_from_db()
+                if db_template:
+                    # Create a new prompt template with the database template
+                    # but keep the recommended skills section
+                    recommended_skills_section = ""
+                    if missing_skills and len(missing_skills) > 0:
+                        skills_list = ", ".join([f"'{skill}'" for skill in missing_skills])
+                        recommended_skills_section = f"""
+                    ## RECOMMENDED SKILLS TO ADD
+
+                    The following skills were identified as potentially valuable for this position but may be missing or not prominently featured in the resume:
+
+                    {skills_list}
+
+                    If the candidate has any experience with these skills, even minor exposure:
+                    - Highlight them prominently in the skills section
+                    - Look for ways to showcase these skills in past experience descriptions
+                    - Ensure you're using the exact terminology as listed
+                    - Look for related skills or experience that could be reframed to match these requirements
+                    - Reframe transferable or implied experience to match the job requirements where ethically possible
+                    - Be assertive in surfacing any relevant experience, even if it is not an exact match, as long as it is truthful
+                    - Do NOT fabricate experience with these skills, only highlight them if they exist
+                    """
+
+                    # Format the template with the recommended skills section
+                    formatted_template = db_template.replace("{recommended_skills_section}", recommended_skills_section)
+                    custom_prompt = PromptTemplate.from_template(template=formatted_template)
+
+                    # Create a new chain with the custom prompt
+                    custom_chain = custom_prompt | self.llm
+
+                    # Generate optimized resume using the custom chain
+                    result = custom_chain.invoke(
+                        {"job_description": job_description, "resume": self.resume}
+                    )
+                else:
+                    # Use the default chain
+                    result = self.chain.invoke(
+                        {"job_description": job_description, "resume": self.resume}
+                    )
+            except Exception as e:
+                print(f"Error using database prompt: {e}. Using default prompt.")
+                # Fall back to default chain
+                result = self.chain.invoke(
+                    {"job_description": job_description, "resume": self.resume}
+                )
 
             # Step 3: Parse and format the LLM response
             try:
@@ -369,7 +442,7 @@ class AtsResumeOptimizer:
                 try:
                     # Direct JSON parsing
                     json_result = json.loads(content)
-                    
+
                     # Enrich result with ATS analysis metrics
                     if score_results:
                         json_result["ats_metrics"] = {
@@ -378,7 +451,7 @@ class AtsResumeOptimizer:
                             "missing_skills": score_results.get("missing_skills", []),
                             "recommendation": score_results.get("recommendation", "")
                         }
-                    
+
                     return json_result
                 except json.JSONDecodeError:
                     # Fallback 1: Extract JSON from code blocks
@@ -386,7 +459,7 @@ class AtsResumeOptimizer:
                     if json_match:
                         json_str = json_match.group(1)
                         json_result = json.loads(json_str)
-                        
+
                         # Enrich result with ATS analysis metrics
                         if score_results:
                             json_result["ats_metrics"] = {
@@ -395,14 +468,14 @@ class AtsResumeOptimizer:
                                 "missing_skills": score_results.get("missing_skills", []),
                                 "recommendation": score_results.get("recommendation", "")
                             }
-                        
+
                         return json_result
 
                     # Fallback 2: Find any JSON-like structure in the response
                     json_str = re.search(r"(\{[\s\S]*\})", content)
                     if json_str:
                         json_result = json.loads(json_str.group(1))
-                        
+
                         # Enrich result with ATS analysis metrics
                         if score_results:
                             json_result["ats_metrics"] = {
@@ -411,7 +484,7 @@ class AtsResumeOptimizer:
                                 "missing_skills": score_results.get("missing_skills", []),
                                 "recommendation": score_results.get("recommendation", "")
                             }
-                        
+
                         return json_result
 
                     # No valid JSON found in the response

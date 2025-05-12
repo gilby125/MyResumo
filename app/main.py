@@ -15,6 +15,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routers.resume import resume_router
 from app.api.routers.token_usage import router as token_usage_router
+from app.api.routers.prompts import prompts_router
 from app.database.connector import MongoConnectionManager
 from app.web.core import core_web_router
 from app.web.dashboard import web_router
@@ -36,8 +37,15 @@ async def startup_logic(app: FastAPI) -> None:
         Exception: If any startup operation fails
     """
     try:
+        # Initialize database connection
         connection_manager = MongoConnectionManager()
         app.state.mongo = connection_manager
+
+        # Initialize default prompts
+        from app.database.repositories.prompt_repository import PromptRepository
+        prompt_repo = PromptRepository()
+        await prompt_repo.initialize_default_prompts()
+        print("Default prompts initialized successfully")
     except Exception as e:
         print(f"Error during startup: {e}")
         raise
@@ -63,7 +71,7 @@ async def shutdown_logic(app: FastAPI) -> None:
 app = FastAPI(
     title="MyResumo API",
     summary="",
-    description=""" 
+    description="""
     MyResumo is an AI-backed resume generator designed to tailor your resume and skills based on a given job description. This innovative tool leverages the latest advancements in AI technology to provide you with a customized resume that stands out.
     """,
     license_info={"name": "MIT License", "url": "https://opensource.org/licenses/MIT"},
@@ -223,6 +231,7 @@ async def health_check():
 # Include routers - These must come BEFORE the catch-all route
 app.include_router(resume_router)
 app.include_router(token_usage_router)  # Add token usage tracking API endpoints
+app.include_router(prompts_router)  # Add prompts management API endpoints
 app.include_router(core_web_router)
 app.include_router(web_router)
 

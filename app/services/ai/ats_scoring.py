@@ -90,13 +90,76 @@ class ATSScorerLLM:
 
         self.parser = PydanticOutputParser(pydantic_object=SkillsExtraction)
 
-        self.setup_prompts()
-
+        # Initialize with default prompts first, they will be overridden if database prompts are available
+        self._setup_default_prompts()
         self.setup_chains()
 
-    def setup_prompts(self):
-        """Set up the prompts for various extraction tasks."""
-        # Prompt for extracting skills from resume
+        # Flag to track if we've tried to load prompts from the database
+        self.prompts_initialized = False
+
+    async def setup_prompts(self):
+        """Set up the prompts for various extraction tasks.
+
+        This method attempts to load prompts from the database first.
+        If they don't exist or can't be loaded, it falls back to the default prompts.
+        """
+        try:
+            # Try to load prompts from the database
+            from app.database.repositories.prompt_repository import PromptRepository
+            repo = PromptRepository()
+
+            # Get resume analysis prompt
+            resume_prompt = await repo.get_prompt_by_name("resume_analysis")
+            if resume_prompt:
+                self.resume_prompt = PromptTemplate(
+                    template=resume_prompt["template"],
+                    input_variables=["resume_text"],
+                    partial_variables={
+                        "format_instructions": self.parser.get_format_instructions()
+                    },
+                )
+            else:
+                # Fall back to default
+                self._setup_default_resume_prompt()
+
+            # Get job analysis prompt
+            job_prompt = await repo.get_prompt_by_name("job_analysis")
+            if job_prompt:
+                self.job_prompt = PromptTemplate(
+                    template=job_prompt["template"],
+                    input_variables=["job_text"],
+                    partial_variables={
+                        "format_instructions": self.parser.get_format_instructions()
+                    },
+                )
+            else:
+                # Fall back to default
+                self._setup_default_job_prompt()
+
+            # Get matching analysis prompt
+            matching_prompt = await repo.get_prompt_by_name("matching_analysis")
+            if matching_prompt:
+                self.matching_prompt = PromptTemplate(
+                    template=matching_prompt["template"],
+                    input_variables=["resume_skills", "job_requirements"],
+                )
+            else:
+                # Fall back to default
+                self._setup_default_matching_prompt()
+
+        except Exception as e:
+            print(f"Error loading prompts from database: {e}. Using default prompts.")
+            # Fall back to default prompts
+            self._setup_default_prompts()
+
+    def _setup_default_prompts(self):
+        """Set up default prompts if database prompts can't be loaded."""
+        self._setup_default_resume_prompt()
+        self._setup_default_job_prompt()
+        self._setup_default_matching_prompt()
+
+    def _setup_default_resume_prompt(self):
+        """Set up the default resume analysis prompt."""
         self.resume_prompt = PromptTemplate(
             template="""You are an expert ATS (Applicant Tracking System) analyzer.
             Extract ALL skills, experience, and qualifications from the following resume text.
@@ -107,12 +170,12 @@ class ATSScorerLLM:
             - Implied skills based on work descriptions
             - Educational qualifications and certifications
             - Transferable skills from different contexts
-            
+
             Be inclusive rather than restrictive - capture everything that could potentially match a job requirement.
-            
+
             RESUME TEXT:
             {resume_text}
-            
+
             {format_instructions}
             """,
             input_variables=["resume_text"],
@@ -121,22 +184,23 @@ class ATSScorerLLM:
             },
         )
 
-        # Prompt for extracting requirements from job description
+    def _setup_default_job_prompt(self):
+        """Set up the default job analysis prompt."""
         self.job_prompt = PromptTemplate(
             template="""You are an expert job analyzer.
             Extract ALL skills, experience requirements, and qualifications from the following job description.
             Be comprehensive, including both required and preferred qualifications.
-            
+
             Include:
             - Technical skills and tools mentioned
             - Experience and education requirements
             - Soft skills and personal qualities
             - Domain knowledge and industry expertise
             - Any other attributes that would make a candidate suitable
-            
+
             JOB DESCRIPTION:
             {job_text}
-            
+
             {format_instructions}
             """,
             input_variables=["job_text"],
@@ -145,7 +209,8 @@ class ATSScorerLLM:
             },
         )
 
-        # More optimistic and explicit scoring prompt with rationale
+    def _setup_default_matching_prompt(self):
+        """Set up the default matching analysis prompt."""
         self.matching_prompt = PromptTemplate(
             template="""
             You are an expert ATS (Applicant Tracking System) analyzer and recruiter.
@@ -174,23 +239,23 @@ class ATSScorerLLM:
             5. A short rationale explaining the score (why this score was chosen, what was strong, what could be improved)
 
             Format your response as a JSON object with the following structure:
-{{
+{{{{
     "score": number,
     "matching_skills": [list of strings],
     "missing_skills": [list of strings],
     "recommendation": string,
     "rationale": string
-}}
+}}}}
             """,
             input_variables=["resume_skills", "job_requirements"],
         )
 
     def setup_chains(self):
         """Set up the LangChain runnable chains for each task."""
-        self.resume_chain = self.resume_prompt | self.llm 
-        
+        self.resume_chain = self.resume_prompt | self.llm
+
         self.job_chain = self.job_prompt | self.llm
-        
+
         self.matching_chain = self.matching_prompt | self.llm
 
     def extract_resume_info(self, resume_text):
@@ -228,7 +293,7 @@ class ATSScorerLLM:
                 job_analysis = str(job_analysis.model_dump())
 
             result = self.matching_chain.invoke({
-                "resume_skills": resume_analysis, 
+                "resume_skills": resume_analysis,
                 "job_requirements": job_analysis
             })
 
@@ -304,7 +369,7 @@ class ATSScorerLLM:
                 "rationale": "Error during LLM analysis."
             }
 
-    def compute_match_score(self, resume_text: str, job_text: str, weights: dict = None) -> dict:
+    async def compute_match_score(self, resume_text: str, job_text: str, weights: dict = None) -> dict:
         """Calculate comprehensive match score between resume and job using LLM only.
 
         Args:
@@ -315,6 +380,15 @@ class ATSScorerLLM:
         Returns:
             dict: Scoring and skill analysis results, 100% LLM-driven.
         """
+        # Try to load prompts from database if not already initialized
+        if not self.prompts_initialized:
+            try:
+                await self.setup_prompts()
+                self.prompts_initialized = True
+            except Exception as e:
+                print(f"Error loading prompts from database: {e}. Using default prompts.")
+                # Already using default prompts from __init__
+
         # Extract information using LLM
         resume_analysis = self.extract_resume_info(resume_text)
         job_analysis = self.extract_job_info(job_text)
@@ -343,12 +417,54 @@ class ATSScorerLLM:
         }
         return result
 
+    # Synchronous wrapper for backward compatibility
+    def compute_match_score_sync(self, resume_text: str, job_text: str, weights: dict = None) -> dict:
+        """Synchronous wrapper for compute_match_score.
+
+        This method is provided for backward compatibility with code that expects
+        a synchronous interface. It uses default prompts only.
+
+        Args:
+            resume_text (str): The candidate's resume text.
+            job_text (str): The job description text.
+            weights (dict, optional): Ignored. Kept for backward compatibility.
+
+        Returns:
+            dict: Scoring and skill analysis results, 100% LLM-driven.
+        """
+        # Extract information using LLM with default prompts
+        resume_analysis = self.extract_resume_info(resume_text)
+        job_analysis = self.extract_job_info(job_text)
+
+        # Get LLM analysis of match
+        match_analysis = self.analyze_match(resume_analysis, job_analysis)
+        llm_score = match_analysis.get("score", 50) / 100
+        llm_score = max(llm_score, 0.45)
+        final_score = llm_score
+
+        if final_score < 0.7:
+            boost_factor = 0.15 * (1 - final_score)
+            final_score = min(final_score + boost_factor, 1.0)
+
+        # Format the result
+        result = {
+            "llm_score": round(llm_score * 100, 2),
+            "final_score": round(final_score * 100, 2),
+            "resume_skills": getattr(resume_analysis, "skills", []),
+            "job_requirements": getattr(job_analysis, "skills", []),
+            "matching_skills": match_analysis.get("matching_skills", []),
+            "missing_skills": match_analysis.get("missing_skills", []),
+            "recommendation": match_analysis.get("recommendation", ""),
+            "rationale": match_analysis.get("rationale", "")
+        }
+        return result
+
 
 # Example usage
 def demo_ats_scorer_llm():
     """Demo function to showcase the ATSScorerLLM functionality."""
     from dotenv import load_dotenv
-    
+
     load_dotenv()
     api_key = os.getenv("API_KEY")
     model_name = os.getenv("API_MODEL_NAME", "gpt-4-turbo")
