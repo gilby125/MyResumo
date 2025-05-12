@@ -9,34 +9,34 @@
             --primary-color: #4a90e2;
             --secondary-color: #2c3e50;
         }
-        
-        body { 
-            margin: 0; 
+
+        body {
+            margin: 0;
             font-family: 'Arial', sans-serif;
             background-color: #ffffff;
         }
-        
+
         .swagger-ui .topbar {
             background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
             padding: 1rem;
         }
-        
+
         .swagger-ui .info .title {
             color: var(--secondary-color);
             font-size: 2.5em;
         }
-        
+
         .swagger-ui .opblock {
             border-radius: 8px;
             margin: 0 0 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        
+
         .swagger-ui .opblock.opblock-post { background: rgba(74, 144, 226, 0.1); }
         .swagger-ui .opblock.opblock-get { background: rgba(97, 175, 254, 0.1); }
         .swagger-ui .opblock.opblock-put { background: rgba(252, 161, 48, 0.1); }
         .swagger-ui .opblock.opblock-delete { background: rgba(249, 62, 62, 0.1); }
-        
+
         .swagger-ui .btn.execute {
             background-color: var(--primary-color);
             border-radius: 4px;
@@ -44,10 +44,23 @@
     </style>
 </head>
 <body>
+    <div style="text-align: right; padding: 10px;">
+        <button onclick="refreshSwagger()" style="background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
+            Refresh API Docs
+        </button>
+    </div>
     <div id="swagger-ui"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.js"></script>
     <script>
+        // Function to refresh the Swagger UI
+        function refreshSwagger() {
+            const timestamp = new Date().getTime();
+            const newUrl = "/openapi.json?t=" + timestamp;
+            window.ui.specActions.updateUrl(newUrl);
+            window.ui.specActions.download();
+        }
+
         window.onload = function() {
             const ui = SwaggerUIBundle({
                 url: "{{ openapi_url }}",
@@ -63,9 +76,11 @@
                 layout: "BaseLayout",
                 defaultModelsExpandDepth: 1,
                 displayRequestDuration: true,
-                docExpansion: "none",
+                docExpansion: "list",  // Changed from "none" to "list" to show all endpoints
                 filter: true,
-                tryItOutEnabled: true
+                tryItOutEnabled: true,
+                tagsSorter: "alpha",   // Sort tags alphabetically
+                operationsSorter: "alpha"  // Sort operations alphabetically
             });
             window.ui = ui;
         }

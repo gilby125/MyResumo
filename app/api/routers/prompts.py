@@ -65,7 +65,8 @@ class UpdatePromptRequest(BaseModel):
 prompts_router = APIRouter(
     prefix="/api/prompts",
     tags=["Prompts"],
-    include_in_schema=True  # Explicitly include in OpenAPI schema
+    include_in_schema=True,  # Explicitly include in OpenAPI schema
+    generate_unique_id_function=lambda route: f"prompts_{route.name}"  # Ensure unique operation IDs
 )
 
 

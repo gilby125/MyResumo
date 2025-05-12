@@ -79,6 +79,7 @@ app = FastAPI(
     docs_url=None,
     # Ensure all routes are included in the OpenAPI schema
     openapi_url="/openapi.json",
+    swagger_ui_parameters={"defaultModelsExpandDepth": -1},  # Hide schemas section by default
 )
 
 
@@ -237,7 +238,7 @@ async def health_check():
 
 # Include routers - These must come BEFORE the catch-all route
 # API routers first to ensure they're included in the OpenAPI schema
-app.include_router(prompts_router)  # Add prompts management API endpoints
+app.include_router(prompts_router, include_in_schema=True)  # Add prompts management API endpoints
 app.include_router(resume_router)
 app.include_router(token_usage_router)  # Add token usage tracking API endpoints
 
