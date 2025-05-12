@@ -32,7 +32,6 @@ COPY --from=builder /usr/local/lib/python3.13/site-packages/ /usr/local/lib/pyth
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 # Copy application code
-# Copy application code
 COPY ./app /code/app
 
 # Create a non-root user and switch to it for security
@@ -48,5 +47,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
-# Use uvicorn for production deployment
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT}"]
+# Use uvicorn for production deployment (using shell form)
+CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
