@@ -15,7 +15,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+# Use MONGODB_URL as the standard environment variable name
+MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
 
 
 class MongoConnectionManager:
@@ -68,7 +69,7 @@ class MongoConnectionManager:
         """
         # Only set the URL if it hasn't been set before or if a new connection string is provided
         if not hasattr(self, 'url') or connection_string:
-            self.url = connection_string or MONGODB_URI
+            self.url = connection_string or MONGODB_URL
 
     async def get_client(self) -> motor.motor_asyncio.AsyncIOMotorClient:
         """Get the MongoDB client instance, creating it if it doesn't exist.

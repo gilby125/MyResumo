@@ -132,7 +132,7 @@ Create a `.env` file in the project root with the following variables:
 
 ```
 API_KEY=your_api_key_here
-MONGODB_URI=mongodb://username:password@host:port/
+MONGODB_URL=mongodb://username:password@host:port/
 ```
 
 ### Using Official Docker Image (Recommended)
@@ -151,7 +151,7 @@ docker run -d --name myresumo \
   -e API_KEY=your_api_key_here \
   -e API_BASE=https://api.deepseek.com/v1 \
   -e MODEL_NAME=deepseek-chat \
-  -e MONGODB_URI=mongodb://username:password@host:port/ \
+  -e MONGODB_URL=mongodb://username:password@host:port/ \
   ghcr.io/analyticace/myresumo:latest
 ```
 
@@ -185,7 +185,7 @@ docker run -d --name myresumo \
    -e API_KEY=your_api_key_here \
    -e API_BASE=your_provider_base_url \
    -e MODEL_NAME=your_preferred_model \
-   -e MONGODB_URI=mongodb://username:password@host:port/ \
+   -e MONGODB_URL=mongodb://username:password@host:port/ \
    ghcr.io/analyticace/myresumo:latest
 ```
 

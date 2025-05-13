@@ -36,6 +36,9 @@ class PromptRepository(BaseRepository):
             collection_name (str): Name of the collection. Defaults to "prompts".
             connection_string (str): MongoDB connection string. Defaults to environment variable or localhost.
         """
+        # Store the connection string as an instance attribute so it can be accessed
+        self.connection_string = connection_string
+
         # Pass the connection string to the base repository
         super().__init__(db_name, collection_name, connection_string=connection_string)
 

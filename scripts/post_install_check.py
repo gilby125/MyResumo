@@ -19,7 +19,7 @@ def log_system_state():
     logger.info(f"Current Working Directory: {os.getcwd()}")
     logger.info(f"PYTHONPATH: {os.environ.get('PYTHONPATH')}")
     logger.info(f"sys.path: {sys.path}")
-    
+
     logger.info("Listing /code directory:")
     code_dir = Path("/code")
     if code_dir.exists() and code_dir.is_dir():
@@ -43,7 +43,7 @@ def check_template_files():
         'simple_resume_template.tex'
     ]
     template_dir = Path('/code/app/services/resume/latex_templates')
-    
+
     logger.info(f"Checking template files in {template_dir}")
     missing = []
     for template in required_templates:
@@ -51,7 +51,7 @@ def check_template_files():
         if not path.exists():
             missing.append(str(path))
             logger.error(f"Missing template: {path}")
-    
+
     if missing:
         raise SystemExit(f"Error: Missing template files: {', '.join(missing)}")
     logger.info("All template files present")
@@ -64,7 +64,7 @@ def check_python_imports():
         'fastapi': "FastAPI framework",
         'pymongo': "PyMongo MongoDB driver"
     }
-    
+
     logger.info("Checking Python imports...")
     all_imports_successful = True
     for module_name, description in imports_to_check.items():
@@ -74,7 +74,7 @@ def check_python_imports():
         except ImportError as e:
             logger.error(f"  FAILED to import '{module_name}' ({description}): {e}")
             all_imports_successful = False
-    
+
     if not all_imports_successful:
         raise SystemExit("One or more critical Python imports failed during build time.")
     logger.info("All critical Python imports successful.")
@@ -82,18 +82,18 @@ def check_python_imports():
 def check_env_vars():
     """Verify required environment variables are set."""
     required_vars = [
-        'MONGODB_URI',
+        'MONGODB_URL',
         'API_KEY',
         'PYTHONPATH'
     ]
-    
+
     logger.info("Checking environment variables")
     missing = []
     for var in required_vars:
         if var not in os.environ:
             missing.append(var)
             logger.error(f"Missing environment variable: {var}")
-    
+
     if missing:
         raise SystemExit(f"Error: Missing environment variables: {', '.join(missing)}")
     logger.info("All required environment variables present")
@@ -105,14 +105,14 @@ def check_directory_structure():
         '/code/app/services/resume/latex_templates',
         '/code/data'
     ]
-    
+
     logger.info("Checking directory structure")
     missing = []
     for dir_path in required_dirs:
         if not Path(dir_path).exists():
             missing.append(dir_path)
             logger.error(f"Missing directory: {dir_path}")
-    
+
     if missing:
         raise SystemExit(f"Error: Missing directories: {', '.join(missing)}")
     logger.info("Directory structure valid")
