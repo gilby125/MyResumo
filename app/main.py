@@ -588,6 +588,68 @@ async def get_prompt_direct(prompt_id: str):
         )
 
 
+@app.get("/api/config/mongodb", tags=["Configuration"], summary="Get MongoDB Configuration")
+async def get_mongodb_config():
+    """Get the current MongoDB configuration.
+
+    Returns:
+    -------
+        JSONResponse: Current MongoDB configuration
+    """
+    mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+
+    # Mask password if present
+    masked_url = mongodb_url
+    if "@" in mongodb_url:
+        parts = mongodb_url.split("@")
+        auth_part = parts[0]
+        if ":" in auth_part:
+            protocol_user = auth_part.split(":")
+            masked_url = f"{protocol_user[0]}:****@{parts[1]}"
+
+    return {
+        "mongodb_url": masked_url,
+        "is_default": mongodb_url == "mongodb://localhost:27017"
+    }
+
+
+@app.post("/api/config/mongodb", tags=["Configuration"], summary="Set MongoDB Configuration")
+async def set_mongodb_config(config: dict):
+    """Set the MongoDB configuration.
+
+    Args:
+        config: Configuration with mongodb_url
+
+    Returns:
+    -------
+        JSONResponse: Success status
+    """
+    if "mongodb_url" not in config:
+        return JSONResponse(
+            status_code=400,
+            content={"detail": "mongodb_url is required"}
+        )
+
+    mongodb_url = config["mongodb_url"]
+
+    # Set environment variable
+    os.environ["MONGODB_URL"] = mongodb_url
+
+    # Test the connection
+    try:
+        from app.database.repositories.prompt_repository import PromptRepository
+        repo = PromptRepository(connection_string=mongodb_url)
+        await repo.get_all_prompts()
+        return {"success": True, "message": "MongoDB configuration updated and connection tested successfully"}
+    except Exception as e:
+        error_msg = f"MongoDB connection test failed: {str(e)}"
+        print(error_msg)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": error_msg}
+        )
+
+
 @app.get("/api/schema", tags=["Development"], summary="Get OpenAPI Schema", include_in_schema=False)
 async def get_openapi_schema():
     """Get the OpenAPI schema directly as JSON.
