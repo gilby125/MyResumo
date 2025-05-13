@@ -51,9 +51,15 @@ class PromptRepository(BaseRepository):
         Returns:
             str: The ID of the created prompt.
         """
-        # Convert UUID to string for MongoDB
+        # Convert the model to a dictionary
         prompt_dict = prompt.model_dump()
+
+        # Ensure the ID is a string
         prompt_dict["id"] = str(prompt_dict["id"])
+
+        # Debug: Print the prompt dictionary before insertion
+        print(f"Creating prompt: {prompt.name}")
+        print(f"ID type: {type(prompt_dict['id'])}")
 
         # Insert into database
         result = await self.insert_one(prompt_dict)

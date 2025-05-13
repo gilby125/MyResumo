@@ -528,10 +528,10 @@ async def initialize_default_prompts_direct():
 
             print("No existing prompts found, creating default prompts manually")
 
-            # Create default prompts manually
+            # Create default prompts manually with string IDs
             default_prompts = [
                 PromptTemplate(
-                    id=str(uuid4()),
+                    id=str(uuid4()),  # Convert UUID to string
                     name="resume_optimization",
                     description="Prompt for optimizing a resume based on a job description",
                     template="You are an expert resume optimizer. Your task is to optimize the following resume based on the job description provided.\n\nJob Description:\n{{job_description}}\n\nResume:\n{{resume}}\n\nRecommended Skills Section:\n{{recommended_skills_section}}\n\nPlease provide an optimized version of the resume that highlights relevant skills and experience for this job.",
@@ -541,7 +541,7 @@ async def initialize_default_prompts_direct():
                     version=1
                 ),
                 PromptTemplate(
-                    id=str(uuid4()),
+                    id=str(uuid4()),  # Convert UUID to string
                     name="ats_scoring",
                     description="Prompt for scoring a resume against a job description",
                     template="You are an ATS (Applicant Tracking System) expert. Your task is to score the following resume against the job description provided.\n\nJob Description:\n{{job_description}}\n\nResume:\n{{resume}}\n\nPlease provide a score from 0-100 indicating how well the resume matches the job description, along with a list of matching skills and missing skills.",
@@ -551,7 +551,7 @@ async def initialize_default_prompts_direct():
                     version=1
                 ),
                 PromptTemplate(
-                    id=str(uuid4()),
+                    id=str(uuid4()),  # Convert UUID to string
                     name="skills_extraction",
                     description="Prompt for extracting skills from a job description",
                     template="You are a skills extraction expert. Your task is to extract all the skills mentioned in the following job description.\n\nJob Description:\n{{job_description}}\n\nPlease provide a list of all technical skills, soft skills, and qualifications mentioned in the job description.",
@@ -565,7 +565,17 @@ async def initialize_default_prompts_direct():
             # Insert default prompts
             for prompt in default_prompts:
                 try:
+                    # Convert the model to a dictionary
                     prompt_dict = prompt.model_dump()
+
+                    # Ensure the ID is a string
+                    prompt_dict["id"] = str(prompt_dict["id"])
+
+                    # Debug: Print the prompt dictionary before insertion
+                    print(f"Inserting prompt: {prompt.name}")
+                    print(f"ID type: {type(prompt_dict['id'])}")
+
+                    # Insert the document
                     result = await repo.insert_one(prompt_dict)
                     print(f"Created prompt: {prompt.name} with ID: {result}")
                 except Exception as e:
