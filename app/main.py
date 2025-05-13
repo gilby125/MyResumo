@@ -305,19 +305,41 @@ async def get_all_prompts_direct():
         JSONResponse: List of all prompts
     """
     try:
+        print("Retrieving all prompts directly...")
         from app.database.repositories.prompt_repository import PromptRepository
-        repo = PromptRepository()
+
+        # Create repository with explicit connection string
+        mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+        print(f"Using MongoDB URL: {mongodb_url}")
+
+        repo = PromptRepository(connection_string=mongodb_url)
         prompts = await repo.get_all_prompts()
+
+        print(f"Retrieved {len(prompts)} prompts from database")
+
+        # Debug: Print the raw prompts
+        print(f"Raw prompts: {prompts}")
 
         # Format response
         from app.api.routers.prompts import PromptResponse
         formatted_prompts = []
+
+        # Debug: Check if prompts is empty
+        if not prompts:
+            print("WARNING: No prompts found in the database!")
+            # Return an empty list instead of raising an exception
+            return {"prompts": []}
+
         for prompt in prompts:
+            print(f"Processing prompt: {prompt}")
+
             # Ensure ID is a string
             if "id" not in prompt or prompt["id"] is None:
                 prompt["id"] = str(prompt.get("_id", "unknown"))
+                print(f"Using _id as ID: {prompt['id']}")
             else:
                 prompt["id"] = str(prompt["id"])
+                print(f"Using existing ID: {prompt['id']}")
 
             # Handle any missing fields with defaults
             if "description" not in prompt:
@@ -494,6 +516,12 @@ async def initialize_default_prompts_direct():
 
             # Check if we already have prompts
             existing_prompts = await repo.get_all_prompts(include_inactive=True)
+            print(f"Found {len(existing_prompts)} existing prompts")
+
+            # Debug: Print the existing prompts
+            for i, prompt in enumerate(existing_prompts):
+                print(f"Existing prompt {i+1}: {prompt.get('name', 'Unknown')} (ID: {prompt.get('id', 'Unknown')})")
+
             if existing_prompts:
                 print(f"Found {len(existing_prompts)} existing prompts, skipping initialization")
                 return {"success": True, "message": f"Found {len(existing_prompts)} existing prompts, skipping initialization"}

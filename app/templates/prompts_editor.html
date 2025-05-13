@@ -174,7 +174,11 @@
             },
 
             fetchMongodbConfig() {
-                fetch('/api/config/mongodb')
+                // Get the base URL from the current window location
+                const baseUrl = window.location.origin;
+                console.log('Base URL:', baseUrl);
+
+                fetch(`${baseUrl}/api/config/mongodb`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -203,7 +207,8 @@
                 this.error = null;
                 this.success = null;
 
-                fetch('/api/config/mongodb', {
+                const baseUrl = window.location.origin;
+                fetch(`${baseUrl}/api/config/mongodb`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -239,7 +244,9 @@
                 this.loading = true;
                 this.error = null;
 
-                fetch('/api/prompts-direct')
+                const baseUrl = window.location.origin;
+                console.log('Fetching prompts from:', `${baseUrl}/api/prompts-direct`);
+                fetch(`${baseUrl}/api/prompts-direct`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -247,7 +254,14 @@
                         return response.json();
                     })
                     .then(data => {
-                        this.prompts = data.prompts;
+                        console.log('Prompts data received:', data);
+                        if (data && data.prompts) {
+                            console.log(`Received ${data.prompts.length} prompts`);
+                            this.prompts = data.prompts;
+                        } else {
+                            console.error('No prompts array in response:', data);
+                            this.error = 'Invalid response format: No prompts array found';
+                        }
                         this.loading = false;
 
                         // If we successfully loaded prompts, clear any success message after 5 seconds
@@ -258,6 +272,7 @@
                         }
                     })
                     .catch(error => {
+                        console.error('Error fetching prompts:', error);
                         this.error = `Failed to load prompts: ${error.message}`;
                         this.loading = false;
                     });
@@ -297,7 +312,9 @@
                     is_active: this.currentPrompt.is_active
                 };
 
-                fetch(`/api/prompts-direct/${this.currentPrompt.id}`, {
+                const baseUrl = window.location.origin;
+                console.log('Saving prompt to:', `${baseUrl}/api/prompts-direct/${this.currentPrompt.id}`);
+                fetch(`${baseUrl}/api/prompts-direct/${this.currentPrompt.id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -305,12 +322,14 @@
                     body: JSON.stringify(updateData)
                 })
                 .then(response => {
+                    console.log('Save prompt response status:', response.status);
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
+                    console.log('Save prompt response data:', data);
                     if (data.success) {
                         // Update was successful, refresh the prompts list
                         this.fetchPrompts();
@@ -320,6 +339,7 @@
                     }
                 })
                 .catch(error => {
+                    console.error('Error saving prompt:', error);
                     this.error = `Failed to save prompt: ${error.message}`;
                     this.loading = false;
                 });
@@ -333,16 +353,21 @@
                 this.loading = true;
                 this.error = null;
 
-                fetch('/api/prompts-direct/initialize', {
+                const baseUrl = window.location.origin;
+                console.log('Initializing default prompts from:', `${baseUrl}/api/prompts-direct/initialize`);
+
+                fetch(`${baseUrl}/api/prompts-direct/initialize`, {
                     method: 'POST'
                 })
                 .then(response => {
+                    console.log('Initialize response status:', response.status);
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
+                    console.log('Initialize response data:', data);
                     if (data.success) {
                         // Initialization was successful, refresh the prompts list
                         this.success = data.message || 'Default prompts initialized successfully';
@@ -352,6 +377,7 @@
                     }
                 })
                 .catch(error => {
+                    console.error('Error initializing prompts:', error);
                     this.error = `Failed to initialize default prompts: ${error.message}`;
                     this.loading = false;
                 });
