@@ -464,10 +464,15 @@ async def initialize_default_prompts_direct():
     try:
         print("Starting initialization of default prompts")
         from app.database.repositories.prompt_repository import PromptRepository
+        from app.database.models.prompt import PromptTemplate
+        from uuid import uuid4
 
         # Create repository with explicit connection string
+        mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+        print(f"Using MongoDB URL: {mongodb_url}")
+
         repo = PromptRepository(
-            connection_string=os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+            connection_string=mongodb_url
         )
 
         # Test connection
@@ -486,9 +491,61 @@ async def initialize_default_prompts_direct():
         # Initialize default prompts
         try:
             print("Initializing default prompts")
-            await repo.initialize_default_prompts()
-            print("Default prompts initialized successfully")
-            return {"success": True}
+
+            # Check if we already have prompts
+            existing_prompts = await repo.get_all_prompts(include_inactive=True)
+            if existing_prompts:
+                print(f"Found {len(existing_prompts)} existing prompts, skipping initialization")
+                return {"success": True, "message": f"Found {len(existing_prompts)} existing prompts, skipping initialization"}
+
+            print("No existing prompts found, creating default prompts manually")
+
+            # Create default prompts manually
+            default_prompts = [
+                PromptTemplate(
+                    id=str(uuid4()),
+                    name="resume_optimization",
+                    description="Prompt for optimizing a resume based on a job description",
+                    template="You are an expert resume optimizer. Your task is to optimize the following resume based on the job description provided.\n\nJob Description:\n{{job_description}}\n\nResume:\n{{resume}}\n\nRecommended Skills Section:\n{{recommended_skills_section}}\n\nPlease provide an optimized version of the resume that highlights relevant skills and experience for this job.",
+                    component="resume_optimization",
+                    variables=["job_description", "resume", "recommended_skills_section"],
+                    is_active=True,
+                    version=1
+                ),
+                PromptTemplate(
+                    id=str(uuid4()),
+                    name="ats_scoring",
+                    description="Prompt for scoring a resume against a job description",
+                    template="You are an ATS (Applicant Tracking System) expert. Your task is to score the following resume against the job description provided.\n\nJob Description:\n{{job_description}}\n\nResume:\n{{resume}}\n\nPlease provide a score from 0-100 indicating how well the resume matches the job description, along with a list of matching skills and missing skills.",
+                    component="ats_scoring",
+                    variables=["job_description", "resume"],
+                    is_active=True,
+                    version=1
+                ),
+                PromptTemplate(
+                    id=str(uuid4()),
+                    name="skills_extraction",
+                    description="Prompt for extracting skills from a job description",
+                    template="You are a skills extraction expert. Your task is to extract all the skills mentioned in the following job description.\n\nJob Description:\n{{job_description}}\n\nPlease provide a list of all technical skills, soft skills, and qualifications mentioned in the job description.",
+                    component="skills_extraction",
+                    variables=["job_description"],
+                    is_active=True,
+                    version=1
+                )
+            ]
+
+            # Insert default prompts
+            for prompt in default_prompts:
+                try:
+                    prompt_dict = prompt.model_dump()
+                    result = await repo.insert_one(prompt_dict)
+                    print(f"Created prompt: {prompt.name} with ID: {result}")
+                except Exception as e:
+                    print(f"Error creating prompt {prompt.name}: {str(e)}")
+
+            print("Default prompts created successfully")
+            return {"success": True, "message": "Default prompts created successfully"}
+
         except Exception as init_err:
             error_msg = f"Error during prompt initialization: {str(init_err)}"
             print(error_msg)

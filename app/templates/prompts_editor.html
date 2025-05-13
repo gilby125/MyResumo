@@ -249,6 +249,13 @@
                     .then(data => {
                         this.prompts = data.prompts;
                         this.loading = false;
+
+                        // If we successfully loaded prompts, clear any success message after 5 seconds
+                        if (this.success) {
+                            setTimeout(() => {
+                                this.success = null;
+                            }, 5000);
+                        }
                     })
                     .catch(error => {
                         this.error = `Failed to load prompts: ${error.message}`;
@@ -338,6 +345,7 @@
                 .then(data => {
                     if (data.success) {
                         // Initialization was successful, refresh the prompts list
+                        this.success = data.message || 'Default prompts initialized successfully';
                         this.fetchPrompts();
                     } else {
                         throw new Error('Initialization failed');
