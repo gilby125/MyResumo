@@ -5,6 +5,7 @@ and handles application startup and shutdown events. It serves as the central
 coordination point for the entire application.
 """
 
+import os
 from datetime import datetime
 
 from fastapi import FastAPI, Request
@@ -312,8 +313,41 @@ async def get_all_prompts_direct():
         from app.api.routers.prompts import PromptResponse
         formatted_prompts = []
         for prompt in prompts:
-            prompt["id"] = prompt.get("id")  # Ensure ID is a string
-            formatted_prompts.append(PromptResponse(**prompt))
+            # Ensure ID is a string
+            if "id" not in prompt or prompt["id"] is None:
+                prompt["id"] = str(prompt.get("_id", "unknown"))
+            else:
+                prompt["id"] = str(prompt["id"])
+
+            # Handle any missing fields with defaults
+            if "description" not in prompt:
+                prompt["description"] = ""
+            if "template" not in prompt:
+                prompt["template"] = ""
+            if "component" not in prompt:
+                prompt["component"] = "unknown"
+            if "variables" not in prompt:
+                prompt["variables"] = []
+            if "is_active" not in prompt:
+                prompt["is_active"] = True
+            if "version" not in prompt:
+                prompt["version"] = 1
+
+            try:
+                formatted_prompts.append(PromptResponse(**prompt))
+            except Exception as prompt_err:
+                print(f"Error formatting prompt: {str(prompt_err)}, prompt: {prompt}")
+                # Add a simplified version if full conversion fails
+                formatted_prompts.append({
+                    "id": str(prompt.get("id", "unknown")),
+                    "name": prompt.get("name", "Unknown"),
+                    "description": prompt.get("description", ""),
+                    "template": prompt.get("template", ""),
+                    "component": prompt.get("component", "unknown"),
+                    "variables": prompt.get("variables", []),
+                    "is_active": prompt.get("is_active", True),
+                    "version": prompt.get("version", 1)
+                })
 
         return {"prompts": formatted_prompts}
     except Exception as e:
@@ -342,33 +376,78 @@ async def update_prompt_direct(prompt_id: str, update_data: dict):
         from app.database.repositories.prompt_repository import PromptRepository
         from app.database.models.prompt import PromptUpdate
 
+        # Log the update request
+        print(f"Updating prompt {prompt_id} with data: {update_data}")
+
         repo = PromptRepository()
 
         # Check if prompt exists
         prompt = await repo.get_prompt_by_id(prompt_id)
         if not prompt:
+            error_msg = f"Prompt with ID {prompt_id} not found"
+            print(error_msg)
             return JSONResponse(
                 status_code=404,
-                content={"detail": f"Prompt with ID {prompt_id} not found"}
+                content={"detail": error_msg}
             )
 
-        # Convert to PromptUpdate model
-        prompt_update = PromptUpdate(**update_data)
-
-        # Update prompt
-        success = await repo.update_prompt(prompt_id, prompt_update)
-        if not success:
+        # Validate the update data
+        if not isinstance(update_data, dict):
+            error_msg = f"Invalid update data: {update_data}"
+            print(error_msg)
             return JSONResponse(
-                status_code=500,
-                content={"detail": "Failed to update prompt"}
+                status_code=400,
+                content={"detail": error_msg}
             )
 
-        return {"success": True}
+        # Ensure required fields are present
+        for field in ["description", "template", "variables", "is_active"]:
+            if field not in update_data:
+                error_msg = f"Missing required field: {field}"
+                print(error_msg)
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": error_msg}
+                )
+
+        # Ensure variables is a list
+        if not isinstance(update_data["variables"], list):
+            error_msg = "Variables must be a list"
+            print(error_msg)
+            return JSONResponse(
+                status_code=400,
+                content={"detail": error_msg}
+            )
+
+        try:
+            # Convert to PromptUpdate model
+            prompt_update = PromptUpdate(**update_data)
+
+            # Update prompt
+            success = await repo.update_prompt(prompt_id, prompt_update)
+            if not success:
+                error_msg = "Failed to update prompt"
+                print(error_msg)
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": error_msg}
+                )
+
+            print(f"Successfully updated prompt {prompt_id}")
+            return {"success": True}
+        except Exception as model_error:
+            error_msg = f"Error creating PromptUpdate model: {str(model_error)}"
+            print(error_msg)
+            return JSONResponse(
+                status_code=400,
+                content={"detail": error_msg}
+            )
     except Exception as e:
-        print(f"Error updating prompt: {str(e)}")
+        error_msg = f"Error updating prompt: {str(e)}"
+        print(error_msg)
         return JSONResponse(
             status_code=500,
-            content={"detail": f"Error updating prompt: {str(e)}"}
+            content={"detail": error_msg}
         )
 
 
@@ -383,15 +462,46 @@ async def initialize_default_prompts_direct():
         JSONResponse: Success status
     """
     try:
+        print("Starting initialization of default prompts")
         from app.database.repositories.prompt_repository import PromptRepository
-        repo = PromptRepository()
-        await repo.initialize_default_prompts()
-        return {"success": True}
+
+        # Create repository with explicit connection string
+        repo = PromptRepository(
+            connection_string=os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+        )
+
+        # Test connection
+        try:
+            print(f"Testing MongoDB connection to {repo.connection_string}")
+            await repo.get_all_prompts()
+            print("MongoDB connection test successful")
+        except Exception as conn_err:
+            error_msg = f"MongoDB connection test failed: {str(conn_err)}"
+            print(error_msg)
+            return JSONResponse(
+                status_code=500,
+                content={"detail": error_msg}
+            )
+
+        # Initialize default prompts
+        try:
+            print("Initializing default prompts")
+            await repo.initialize_default_prompts()
+            print("Default prompts initialized successfully")
+            return {"success": True}
+        except Exception as init_err:
+            error_msg = f"Error during prompt initialization: {str(init_err)}"
+            print(error_msg)
+            return JSONResponse(
+                status_code=500,
+                content={"detail": error_msg}
+            )
     except Exception as e:
-        print(f"Error initializing default prompts: {str(e)}")
+        error_msg = f"Error initializing default prompts: {str(e)}"
+        print(error_msg)
         return JSONResponse(
             status_code=500,
-            content={"detail": f"Error initializing default prompts: {str(e)}"}
+            content={"detail": error_msg}
         )
 
 
@@ -409,24 +519,72 @@ async def get_prompt_direct(prompt_id: str):
         JSONResponse: Prompt details
     """
     try:
+        print(f"Getting prompt with ID: {prompt_id}")
         from app.database.repositories.prompt_repository import PromptRepository
         from app.api.routers.prompts import PromptResponse
 
-        repo = PromptRepository()
+        # Create repository with explicit connection string
+        repo = PromptRepository(
+            connection_string=os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+        )
+
+        # Get the prompt
         prompt = await repo.get_prompt_by_id(prompt_id)
 
         if not prompt:
+            error_msg = f"Prompt with ID {prompt_id} not found"
+            print(error_msg)
             return JSONResponse(
                 status_code=404,
-                content={"detail": f"Prompt with ID {prompt_id} not found"}
+                content={"detail": error_msg}
             )
 
-        return PromptResponse(**prompt)
+        # Ensure all required fields are present
+        if "id" not in prompt or prompt["id"] is None:
+            prompt["id"] = str(prompt.get("_id", prompt_id))
+        else:
+            prompt["id"] = str(prompt["id"])
+
+        # Handle any missing fields with defaults
+        if "description" not in prompt:
+            prompt["description"] = ""
+        if "template" not in prompt:
+            prompt["template"] = ""
+        if "component" not in prompt:
+            prompt["component"] = "unknown"
+        if "variables" not in prompt:
+            prompt["variables"] = []
+        if "is_active" not in prompt:
+            prompt["is_active"] = True
+        if "version" not in prompt:
+            prompt["version"] = 1
+        if "name" not in prompt:
+            prompt["name"] = f"Prompt {prompt_id}"
+
+        try:
+            response = PromptResponse(**prompt)
+            print(f"Successfully retrieved prompt: {prompt['name']}")
+            return response
+        except Exception as format_err:
+            error_msg = f"Error formatting prompt response: {str(format_err)}"
+            print(error_msg)
+            # Return a simplified response if formatting fails
+            return {
+                "id": str(prompt.get("id", prompt_id)),
+                "name": prompt.get("name", f"Prompt {prompt_id}"),
+                "description": prompt.get("description", ""),
+                "template": prompt.get("template", ""),
+                "component": prompt.get("component", "unknown"),
+                "variables": prompt.get("variables", []),
+                "is_active": prompt.get("is_active", True),
+                "version": prompt.get("version", 1)
+            }
     except Exception as e:
-        print(f"Error retrieving prompt: {str(e)}")
+        error_msg = f"Error retrieving prompt: {str(e)}"
+        print(error_msg)
         return JSONResponse(
             status_code=500,
-            content={"detail": f"Error retrieving prompt: {str(e)}"}
+            content={"detail": error_msg}
         )
 
 
@@ -490,10 +648,12 @@ async def refresh_openapi_schema():
 # Include routers - These must come BEFORE the catch-all route
 # API routers first to ensure they're included in the OpenAPI schema
 # Explicitly set include_in_schema=True for all API routers
-app.include_router(
-    prompts_router,
-    include_in_schema=True
-)  # Add prompts management API endpoints
+
+# Don't include the prompts router since we're using direct endpoints
+# app.include_router(
+#     prompts_router,
+#     include_in_schema=True
+# )  # Add prompts management API endpoints
 
 app.include_router(resume_router, include_in_schema=True)
 app.include_router(token_usage_router, include_in_schema=True)  # Add token usage tracking API endpoints
