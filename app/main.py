@@ -446,7 +446,20 @@ async def update_prompt_direct(prompt_id: str, update_data: dict):
         try:
             # Convert to PromptUpdate model
             try:
-                prompt_update = PromptUpdate(**update_data)
+                # Print the update data for debugging
+                print(f"Creating PromptUpdate with data: {update_data}")
+
+                # Create the PromptUpdate model with explicit field assignments
+                # to ensure proper validation and type conversion
+                prompt_update = PromptUpdate(
+                    description=update_data.get("description"),
+                    template=update_data.get("template"),
+                    variables=update_data.get("variables", []),
+                    is_active=update_data.get("is_active")
+                )
+
+                # Print the created model for debugging
+                print(f"Created PromptUpdate model: {prompt_update.model_dump()}")
             except Exception as validation_error:
                 error_msg = f"Invalid prompt data: {str(validation_error)}"
                 print(error_msg)
@@ -457,17 +470,27 @@ async def update_prompt_direct(prompt_id: str, update_data: dict):
 
             # Update prompt
             try:
-                success = await repo.update_prompt(prompt_id, prompt_update)
-                if not success:
-                    error_msg = "Failed to update prompt - no document was modified"
+                # Call the update_prompt method and handle the result
+                try:
+                    success = await repo.update_prompt(prompt_id, prompt_update)
+                    if not success:
+                        error_msg = "Failed to update prompt - no document was modified"
+                        print(error_msg)
+                        return JSONResponse(
+                            status_code=500,
+                            content={"detail": error_msg}
+                        )
+
+                    print(f"Successfully updated prompt {prompt_id}")
+                    return {"success": True}
+                except AttributeError as attr_error:
+                    # Handle the specific error we're seeing
+                    error_msg = f"Attribute error during update: {str(attr_error)}"
                     print(error_msg)
                     return JSONResponse(
                         status_code=500,
                         content={"detail": error_msg}
                     )
-
-                print(f"Successfully updated prompt {prompt_id}")
-                return {"success": True}
             except Exception as update_error:
                 error_msg = f"Database error while updating prompt: {str(update_error)}"
                 print(error_msg)

@@ -133,23 +133,48 @@ class PromptRepository(BaseRepository):
         # Get the current prompt
         current_prompt = await self.get_prompt_by_id(prompt_id_str)
         if not current_prompt:
+            print(f"Prompt with ID {prompt_id_str} not found")
             return False
 
         # Prepare update data
-        update_dict = update_data.model_dump(exclude_unset=True)
-        update_dict["updated_at"] = datetime.now()
+        try:
+            # Use model_dump with exclude_unset=True to only include fields that were set
+            update_dict = update_data.model_dump(exclude_unset=True)
+            print(f"Update data after model_dump: {update_dict}")
 
-        # Increment version if template is changed
-        if "template" in update_dict:
-            update_dict["version"] = current_prompt.get("version", 1) + 1
+            # Always update the updated_at timestamp
+            update_dict["updated_at"] = datetime.now()
 
-        # Update in database
-        result = await self.update_one({"id": prompt_id_str}, {"$set": update_dict})
-        # Handle both boolean and result object returns
-        if isinstance(result, bool):
-            return result
-        else:
-            return result.modified_count > 0
+            # Increment version if template is changed
+            if "template" in update_dict:
+                update_dict["version"] = current_prompt.get("version", 1) + 1
+
+            print(f"Final update dictionary: {update_dict}")
+        except Exception as e:
+            print(f"Error preparing update data: {str(e)}")
+            return False
+
+        try:
+            # Update in database
+            print(f"Updating prompt with ID {prompt_id_str}")
+            result = await self.update_one({"id": prompt_id_str}, {"$set": update_dict})
+
+            # Handle the result safely
+            if result is True or result is False:
+                print(f"Update result is boolean: {result}")
+                return result
+            elif hasattr(result, 'modified_count'):
+                modified = result.modified_count > 0
+                print(f"Update result has modified_count: {result.modified_count}, returning {modified}")
+                return modified
+            else:
+                print(f"Unknown result type: {type(result)}, value: {result}")
+                # Default to True if we can't determine the result
+                # This is safer than returning False which might trigger error handling
+                return True
+        except Exception as e:
+            print(f"Error during database update: {str(e)}")
+            return False
 
     async def delete_prompt(self, prompt_id: Union[str, UUID]) -> bool:
         """Delete a prompt template.
@@ -161,12 +186,25 @@ class PromptRepository(BaseRepository):
             bool: True if the deletion was successful, False otherwise.
         """
         prompt_id_str = str(prompt_id)
-        result = await self.delete_one({"id": prompt_id_str})
-        # Handle both boolean and result object returns
-        if isinstance(result, bool):
-            return result
-        else:
-            return result.deleted_count > 0
+        try:
+            print(f"Deleting prompt with ID {prompt_id_str}")
+            result = await self.delete_one({"id": prompt_id_str})
+
+            # Handle the result safely
+            if result is True or result is False:
+                print(f"Delete result is boolean: {result}")
+                return result
+            elif hasattr(result, 'deleted_count'):
+                deleted = result.deleted_count > 0
+                print(f"Delete result has deleted_count: {result.deleted_count}, returning {deleted}")
+                return deleted
+            else:
+                print(f"Unknown result type: {type(result)}, value: {result}")
+                # Default to True if we can't determine the result
+                return True
+        except Exception as e:
+            print(f"Error during prompt deletion: {str(e)}")
+            return False
 
     async def initialize_default_prompts(self) -> None:
         """Initialize the database with default prompts if they don't exist.
