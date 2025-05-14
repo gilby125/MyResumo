@@ -46,7 +46,7 @@ class ATSScorerLLM:
     All scoring, skill matching, and recommendations are 100% LLM-driven, making the system domain-agnostic and robust for any industry.
     """
 
-    def __init__(self, model_name="", api_key=None, api_base="", user_id=None):
+    def __init__(self, model_name="", api_key=None, api_base="", user_id=None, temperature=0.1):
         """Initialize the ATS scorer with API credentials and model configuration.
 
         Args:
@@ -54,6 +54,7 @@ class ATSScorerLLM:
             api_key (str, optional): API key for the LLM service. Falls back to API_KEY env var.
             api_base (str, optional): Base URL for the API service. Falls back to API_BASE env var.
             user_id (str, optional): User ID for token tracking.
+            temperature (float, optional): Temperature setting for the LLM (0.0-1.0) to control creativity.
 
         Raises:
             ValueError: If required credentials are missing after falling back to environment variables.
@@ -62,6 +63,7 @@ class ATSScorerLLM:
         self.api_base = api_base or os.getenv("API_BASE")
         self.model_name = model_name or os.getenv("MODEL_NAME")
         self.user_id = user_id
+        self.temperature = temperature
 
         if not self.api_key:
             raise ValueError(
@@ -81,7 +83,7 @@ class ATSScorerLLM:
         # Use TokenTracker to create a tracked instance of the LLM
         self.llm = TokenTracker.get_tracked_langchain_llm(
             model_name=self.model_name,
-            temperature=0.1,
+            temperature=self.temperature,
             api_key=self.api_key,
             api_base=self.api_base,
             feature="ats_scoring",

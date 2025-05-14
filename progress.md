@@ -24,7 +24,7 @@
 - Add validation for required environment variables at startup
 - Implement proper error handling for missing environment variables
 
-## 2023-07-15: Temperature Slider for LLM Creativity Control
+## 2023-07-15: Temperature Slider for LLM Creativity Control (Resume Optimization)
 
 ### Changes Made
 1. **API Model Update**
@@ -57,3 +57,39 @@
 - Consider adding temperature control to other LLM-powered features
 - Add user preference saving for temperature settings
 - Add more detailed explanation of temperature effects on resume optimization
+
+## 2023-07-16: Temperature Slider for LLM Creativity Control (Resume Scoring)
+
+### Changes Made
+1. **API Model Update**
+   - Added temperature parameter to `ScoreResumeRequest` model in `app/api/routers/resume.py`
+   - Parameter is optional with a default value of 0.0
+   - Added validation to ensure temperature is between 0.0 and 1.0
+
+2. **AI Service Update**
+   - Updated `ATSScorerLLM` class in `app/services/ai/ats_scoring.py` to accept temperature parameter
+   - Modified `__init__` method to store temperature as an instance variable
+   - Updated TokenTracker call to use the temperature parameter when creating the LLM
+   - Updated `AtsResumeOptimizer` to pass temperature to `ATSScorerLLM`
+
+3. **API Endpoint Update**
+   - Modified `score_resume` function in `app/api/routers/resume.py` to pass temperature to the scorer
+   - Added logging of temperature value
+
+4. **Frontend Update**
+   - Added temperature slider to the Score Resume modal in `app/templates/dashboard.html`
+   - Added temperature property to the dashboardApp Alpine.js component
+   - Updated API call to include temperature parameter
+   - Added UI labels and explanations for the temperature slider
+
+### Benefits
+- Users can now control the creativity level of the LLM when scoring resumes
+- Provides consistent temperature control across both scoring and optimization features
+- Allows for more personalized resume analysis based on user preferences
+- Improves user experience by providing more control over AI behavior
+
+### Next Steps
+- Monitor user feedback on temperature settings to determine optimal defaults
+- Consider adding temperature presets (e.g., "Conservative", "Balanced", "Creative")
+- Add tooltips or help text to explain the impact of different temperature settings
+- Consider adding temperature control to other LLM-powered features

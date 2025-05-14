@@ -119,6 +119,9 @@ class ScoreResumeRequest(BaseModel):
     job_description: str = Field(
         ..., description="Job description to score the resume against"
     )
+    temperature: float = Field(
+        0.0, description="Temperature setting for the LLM (0.0-1.0) to control creativity", ge=0.0, le=1.0
+    )
 
 
 class ResumeScoreResponse(BaseModel):
@@ -673,10 +676,12 @@ async def score_resume(
 
     # Initialize ATS scorer
     try:
+        logger.info(f"Initializing ATSScorerLLM with temperature: {scoring_request.temperature}")
         ats_scorer = ATSScorerLLM(
             model_name=model_name,
             api_key=api_key,
             api_base=api_base_url,
+            temperature=scoring_request.temperature,
         )
 
         # Get job description

@@ -97,6 +97,7 @@ class AtsResumeOptimizer:
                 api_key=self.api_key,
                 api_base=self.api_base,
                 user_id=self.user_id,
+                temperature=self.temperature,
             )
 
         self._setup_chain()
