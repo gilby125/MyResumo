@@ -65,6 +65,7 @@ class AtsResumeOptimizer:
         api_key: str = None,
         api_base: str = None,
         user_id: str = None,
+        temperature: float = 0.0,
     ) -> None:
         """Initialize the AI model for resume processing.
 
@@ -74,12 +75,14 @@ class AtsResumeOptimizer:
             api_key: OpenAI API key for authentication.
             api_base: Base URL for the OpenAI API.
             user_id: Optional user ID for token tracking.
+            temperature: Temperature setting for the LLM (0.0-1.0) to control creativity.
         """
         self.model_name = model_name or os.getenv("MODEL_NAME")
         self.resume = resume
         self.api_key = api_key or os.getenv("API_KEY")
         self.api_base = api_base or os.getenv("API_BASE")
         self.user_id = user_id
+        self.temperature = temperature
 
         # Initialize LLM component and output parser
         self.llm = self._get_openai_model()
@@ -108,7 +111,7 @@ class AtsResumeOptimizer:
             # Create LLM instance with token tracking for usage monitoring
             return TokenTracker.get_tracked_langchain_llm(
                 model_name=self.model_name,
-                temperature=0,
+                temperature=self.temperature,
                 api_key=self.api_key,
                 api_base=self.api_base,
                 feature="resume_optimization",
@@ -117,7 +120,7 @@ class AtsResumeOptimizer:
             )
         else:
             # Fallback to standard model if no specific model is configured
-            return ChatOpenAI(temperature=0)
+            return ChatOpenAI(temperature=self.temperature)
 
     async def _get_prompt_template_from_db(self) -> Optional[str]:
         """Attempt to load the resume optimization prompt template from the database.

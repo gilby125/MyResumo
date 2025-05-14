@@ -61,6 +61,9 @@ class OptimizeResumeRequest(BaseModel):
     job_description: str = Field(
         ..., description="Job description to tailor the resume for"
     )
+    temperature: float = Field(
+        0.0, description="Temperature setting for the LLM (0.0-1.0) to control creativity", ge=0.0, le=1.0
+    )
 
 
 class ResumeSummary(BaseModel):
@@ -485,12 +488,13 @@ async def optimize_resume(
         logger.info(f"Identified missing skills: {missing_skills}")
 
         # 6. Initialize optimizer and generate optimized resume
-        logger.info("Initializing AtsResumeOptimizer")
+        logger.info(f"Initializing AtsResumeOptimizer with temperature: {optimization_request.temperature}")
         optimizer = AtsResumeOptimizer(
             model_name=model_name,
             resume=resume["original_content"],
             api_key=api_key,
             api_base=api_base_url,
+            temperature=optimization_request.temperature,
         )
 
         logger.info("Calling AI service to generate optimized resume")
