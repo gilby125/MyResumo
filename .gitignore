@@ -171,3 +171,9 @@ node_modules
 
 myresumo-prd.md
 .ruff_cache/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
