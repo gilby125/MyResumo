@@ -28,7 +28,7 @@ The `update_prompt` method in `PromptRepository` was trying to access the `modif
    - Applied the same error handling improvements for consistency
    - Added detailed logging
 
-## Issue 2: Jinja2 Template Syntax Error
+## Issue 2: Jinja2 Template Syntax Error - Ternary Operator
 
 ### Problem
 When accessing the `/prompts` page, the application was encountering a Jinja2 template syntax error:
@@ -58,10 +58,37 @@ The fixed code:
 
 This change properly separates the JavaScript logic (Alpine.js) from the Jinja2 template syntax, resolving the conflict.
 
+## Issue 3: Jinja2 Template Syntax Error - Backslash in RegExp
+
+### Problem
+When accessing the `/prompts` page, the application was encountering another Jinja2 template syntax error:
+```
+jinja2.exceptions.TemplateSyntaxError: unexpected char '\\' at 39582
+```
+
+### Root Cause
+The error was caused by JavaScript regular expressions in the template that use backslashes to escape special characters. Jinja2 was trying to interpret these backslashes as part of its template syntax.
+
+### Solution
+Wrapped the entire JavaScript code in `{% raw %}` and `{% endraw %}` tags to tell Jinja2 not to process this part of the template:
+
+```html
+<script>
+{% raw %}
+    function promptsEditor() {
+        // JavaScript code with regular expressions
+        // ...
+    }
+{% endraw %}
+</script>
+```
+
+This tells Jinja2 to treat everything between the `{% raw %}` and `{% endraw %}` tags as raw text and not to process any Jinja2 syntax within that block. This allows JavaScript code with special characters like backslashes to work correctly.
+
 ## Testing
-Both fixes have been implemented and should resolve the respective issues:
+All fixes have been implemented and should resolve the respective issues:
 1. The prompt update functionality should now work correctly without the 'bool' object error
-2. The prompts editor page should load without the Jinja2 template syntax error
+2. The prompts editor page should load without any Jinja2 template syntax errors
 
 ## Future Improvements
 1. Add more comprehensive validation for prompt updates
@@ -69,3 +96,4 @@ Both fixes have been implemented and should resolve the respective issues:
 3. Standardize the return types from database operations to avoid type checking
 4. Consider using a more robust error handling mechanism like Result objects
 5. Ensure proper separation of JavaScript and Jinja2 syntax throughout the templates
+6. Use `{% raw %}` tags consistently for JavaScript code blocks to prevent Jinja2 parsing conflicts
