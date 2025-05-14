@@ -26,14 +26,20 @@ class ResumeRepository(BaseRepository):
         self,
         db_name: str = os.getenv("DB_NAME", "myresumo"),
         collection_name: str = "resumes",
+        connection_string: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017"),
     ):
         """Initialize the resume repository with database and collection names.
 
         Args:
-            db_name (str): Name of the database. Defaults to "myresumo".
+            db_name (str): Name of the database. Defaults to environment variable or "myresumo".
             collection_name (str): Name of the collection. Defaults to "resumes".
+            connection_string (str): MongoDB connection string. Defaults to environment variable or localhost.
         """
-        super().__init__(db_name, collection_name)
+        # Store the connection string as an instance attribute so it can be accessed
+        self.connection_string = connection_string
+
+        # Pass the connection string to the base repository
+        super().__init__(db_name, collection_name, connection_string=connection_string)
 
     async def create_resume(self, resume: Resume) -> str:
         """Create a new resume document in the database.
@@ -127,36 +133,36 @@ class ResumeRepository(BaseRepository):
                 # This ensures the optimization doesn't appear to reduce the score
                 format_correction = original_ats_score - ats_score + 5  # Add a small improvement margin
                 corrected_ats_score = original_ats_score + format_correction
-                
+
                 # Cap at 100 to keep within valid score range
                 corrected_ats_score = min(100, corrected_ats_score)
-                
+
                 # Calculate corrected improvement
                 corrected_improvement = corrected_ats_score - original_ats_score
             else:
                 corrected_improvement = score_improvement
-                
+
             update_dict = {
-                "optimized_data": optimized_data.dict(),
+                "optimized_data": optimized_data.model_dump(),
                 "ats_score": corrected_ats_score,
                 "updated_at": datetime.now(),
             }
-            
+
             # Add optional fields if provided
             if original_ats_score is not None:
                 update_dict["original_ats_score"] = original_ats_score
-            
+
             if matching_skills is not None:
                 update_dict["matching_skills"] = matching_skills
-                
+
             if missing_skills is not None:
                 update_dict["missing_skills"] = missing_skills
-                
+
             update_dict["score_improvement"] = corrected_improvement
-                
+
             if recommendation is not None:
                 update_dict["recommendation"] = recommendation
-            
+
             return await self.update_one(
                 {"_id": ObjectId(resume_id)},
                 {"$set": update_dict},

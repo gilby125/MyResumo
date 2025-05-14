@@ -52,7 +52,9 @@ async def startup_logic(app: FastAPI) -> None:
         # Initialize default prompts
         try:
             from app.database.repositories.prompt_repository import PromptRepository
-            prompt_repo = PromptRepository()
+            # Create repository with explicit connection string
+            mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+            prompt_repo = PromptRepository(connection_string=mongodb_url)
             print(f"MongoDB URL: {prompt_repo.connection_string}")
 
             # Test MongoDB connection

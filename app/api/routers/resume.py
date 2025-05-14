@@ -147,7 +147,12 @@ async def get_resume_repository(request: Request) -> ResumeRepository:
     -------
         ResumeRepository: An instance of the resume repository
     """
-    return ResumeRepository()
+    # Get MongoDB URL from environment variable
+    mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    logger.info(f"Creating ResumeRepository with MongoDB URL: {mongodb_url}")
+
+    # Create repository with explicit connection string
+    return ResumeRepository(connection_string=mongodb_url)
 
 
 @resume_router.post(
@@ -509,7 +514,7 @@ async def optimize_resume(
         # 9. Parse and validate result
         logger.info("Parsing result into ResumeData model")
         try:
-            optimized_data = ResumeData.parse_obj(result)
+            optimized_data = ResumeData.model_validate(result)
             logger.info("Successfully validated result through Pydantic model")
         except Exception as validation_error:
             logger.error(
