@@ -875,7 +875,7 @@ async def prompts_editor_page(request: Request):
     -------
         HTMLResponse: The rendered prompts editor page
     """
-    return templates.TemplateResponse("prompts_editor.html", {"request": request})
+    return templates.TemplateResponse("prompts_editor_new.html", {"request": request})
 
 
 # Catch-all for not found pages - IMPORTANT: This must come AFTER including all routers

@@ -318,26 +318,8 @@
     </div>
 </div>
 
+<script src="{{ url_for('static', path='/js/prompts-editor.js') }}"></script>
 <script>
-{% raw %}
-    function promptsEditor() {
-        return {
-            loading: true,
-            error: null,
-            success: null,
-            prompts: [],
-            currentPrompt: null,
-            newVariable: '',
-            mongodbUrl: 'Loading...',
-            newMongodbUrl: '',
-            expandEditor: false,
-            showPreview: false,
-            sampleValues: {},
-            searchQuery: '',
-            componentFilter: '',
-            statusFilter: '',
-            testResult: null,
-            testLoading: false,
 
             init() {
                 this.fetchMongodbConfig();
