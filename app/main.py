@@ -52,8 +52,8 @@ async def startup_logic(app: FastAPI) -> None:
         # Initialize default prompts
         try:
             from app.database.repositories.prompt_repository import PromptRepository
-            # Create repository with explicit connection string
-            mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+            # Create repository with connection string from environment
+            mongodb_url = os.getenv("MONGODB_URL")
             prompt_repo = PromptRepository(connection_string=mongodb_url)
             print(f"MongoDB URL: {prompt_repo.connection_string}")
 
@@ -310,8 +310,8 @@ async def get_all_prompts_direct():
         print("Retrieving all prompts directly...")
         from app.database.repositories.prompt_repository import PromptRepository
 
-        # Create repository with explicit connection string
-        mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+        # Create repository with connection string from environment
+        mongodb_url = os.getenv("MONGODB_URL")
         print(f"Using MongoDB URL: {mongodb_url}")
 
         repo = PromptRepository(connection_string=mongodb_url)
@@ -491,8 +491,8 @@ async def initialize_default_prompts_direct():
         from app.database.models.prompt import PromptTemplate
         from uuid import uuid4
 
-        # Create repository with explicit connection string
-        mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+        # Create repository with connection string from environment
+        mongodb_url = os.getenv("MONGODB_URL")
         print(f"Using MongoDB URL: {mongodb_url}")
 
         repo = PromptRepository(
@@ -620,9 +620,9 @@ async def get_prompt_direct(prompt_id: str):
         from app.database.repositories.prompt_repository import PromptRepository
         from app.api.routers.prompts import PromptResponse
 
-        # Create repository with explicit connection string
+        # Create repository with connection string from environment
         repo = PromptRepository(
-            connection_string=os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+            connection_string=os.getenv("MONGODB_URL")
         )
 
         # Get the prompt
@@ -693,11 +693,11 @@ async def get_mongodb_config():
     -------
         JSONResponse: Current MongoDB configuration
     """
-    mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    mongodb_url = os.getenv("MONGODB_URL")
 
     # Mask password if present
     masked_url = mongodb_url
-    if "@" in mongodb_url:
+    if mongodb_url and "@" in mongodb_url:
         parts = mongodb_url.split("@")
         auth_part = parts[0]
         if ":" in auth_part:
@@ -706,7 +706,7 @@ async def get_mongodb_config():
 
     return {
         "mongodb_url": masked_url,
-        "is_default": mongodb_url == "mongodb://localhost:27017"
+        "is_default": mongodb_url is None
     }
 
 

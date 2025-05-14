@@ -148,10 +148,10 @@ async def get_resume_repository(request: Request) -> ResumeRepository:
         ResumeRepository: An instance of the resume repository
     """
     # Get MongoDB URL from environment variable
-    mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    mongodb_url = os.getenv("MONGODB_URL")
     logger.info(f"Creating ResumeRepository with MongoDB URL: {mongodb_url}")
 
-    # Create repository with explicit connection string
+    # Create repository with connection string from environment
     return ResumeRepository(connection_string=mongodb_url)
 
 

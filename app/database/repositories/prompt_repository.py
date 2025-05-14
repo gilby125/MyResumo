@@ -27,7 +27,7 @@ class PromptRepository(BaseRepository):
         self,
         db_name: str = os.getenv("DB_NAME", "myresumo"),
         collection_name: str = "prompts",
-        connection_string: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017"),
+        connection_string: str = os.getenv("MONGODB_URL"),
     ):
         """Initialize the prompt repository with database and collection names.
 
