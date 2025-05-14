@@ -214,7 +214,9 @@
                             </div>
                             <div class="flex justify-between mt-2">
                                 <p class="text-sm text-gray-500">Use {{variable}} syntax for variables.</p>
-                                <button @click="showPreview = !showPreview" class="text-sm text-primary-600 hover:text-primary-800" x-text="showPreview ? 'Hide Preview' : 'Show Preview'"></button>
+                                <button @click="showPreview = !showPreview" class="text-sm text-primary-600 hover:text-primary-800"
+                                    x-text="showPreview ? 'Hide Preview' : 'Show Preview'">
+                                </button>
                             </div>
 
                             <!-- Preview Panel -->
