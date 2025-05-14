@@ -62,9 +62,52 @@
                 </button>
             </div>
 
+            <!-- Search and Filter -->
+            <div class="mb-4 bg-white p-4 shadow sm:rounded-md">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div>
+                        <label for="search" class="block text-sm font-medium text-gray-700">Search</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <input type="text" name="search" id="search" x-model="searchQuery"
+                                   class="focus:ring-primary-500 focus:border-primary-500 block w-full pr-10 sm:text-sm border-gray-300 rounded-md"
+                                   placeholder="Search prompts...">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="component-filter" class="block text-sm font-medium text-gray-700">Component</label>
+                        <select id="component-filter" name="component-filter" x-model="componentFilter"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                            <option value="">All Components</option>
+                            <template x-for="component in uniqueComponents" :key="component">
+                                <option :value="component" x-text="component"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="status-filter" class="block text-sm font-medium text-gray-700">Status</label>
+                        <select id="status-filter" name="status-filter" x-model="statusFilter"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                            <option value="">All</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                <div class="p-2 bg-gray-50 text-sm text-gray-500 border-b border-gray-200">
+                    Showing <span x-text="filteredPrompts.length"></span> of <span x-text="prompts.length"></span> prompts
+                </div>
                 <ul class="divide-y divide-gray-200">
-                    <template x-for="prompt in prompts" :key="prompt.id">
+                    <template x-for="prompt in filteredPrompts" :key="prompt.id">
                         <li>
                             <div class="px-4 py-4 sm:px-6 hover:bg-gray-50 cursor-pointer" @click="editPrompt(prompt)">
                                 <div class="flex items-center justify-between">
@@ -88,6 +131,10 @@
                             </div>
                         </li>
                     </template>
+                    <!-- Empty state -->
+                    <li x-show="filteredPrompts.length === 0" class="px-4 py-8 text-center text-gray-500">
+                        No prompts found matching your filters. Try adjusting your search criteria.
+                    </li>
                 </ul>
             </div>
         </div>
@@ -112,9 +159,51 @@
 
                         <div>
                             <label for="template" class="block text-sm font-medium text-gray-700">Template</label>
-                            <textarea name="template" id="template" rows="10" x-model="currentPrompt.template"
-                                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"></textarea>
-                            <p class="mt-2 text-sm text-gray-500">Use {{variable}} syntax for variables.</p>
+                            <div class="relative">
+                                <textarea name="template" id="template" rows="15" x-model="currentPrompt.template"
+                                          class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 font-mono text-sm"></textarea>
+                                <div class="absolute top-2 right-2">
+                                    <button @click="expandEditor = !expandEditor" class="p-1 bg-gray-200 rounded hover:bg-gray-300" title="Toggle fullscreen">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex justify-between mt-2">
+                                <p class="text-sm text-gray-500">Use {{variable}} syntax for variables.</p>
+                                <button @click="showPreview = !showPreview" class="text-sm text-primary-600 hover:text-primary-800">
+                                    {{ showPreview ? 'Hide Preview' : 'Show Preview' }}
+                                </button>
+                            </div>
+
+                            <!-- Preview Panel -->
+                            <div x-show="showPreview" class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-md">
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">Preview with Sample Values</h4>
+                                <div class="bg-white p-3 rounded border border-gray-300 text-sm whitespace-pre-wrap" x-html="renderPreview()"></div>
+                            </div>
+                        </div>
+
+                        <!-- Fullscreen Editor Modal -->
+                        <div x-show="expandEditor" class="fixed inset-0 bg-gray-800 bg-opacity-75 z-50 flex items-center justify-center p-4" x-cloak>
+                            <div class="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-screen flex flex-col">
+                                <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                                    <h3 class="text-lg font-medium text-gray-900">Edit Template</h3>
+                                    <button @click="expandEditor = false" class="text-gray-400 hover:text-gray-500">
+                                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="p-4 flex-grow overflow-auto">
+                                    <textarea x-model="currentPrompt.template" class="w-full h-full p-2 border border-gray-300 rounded-md font-mono text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"></textarea>
+                                </div>
+                                <div class="p-4 border-t border-gray-200 flex justify-end">
+                                    <button @click="expandEditor = false" class="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700">
+                                        Done
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <div>
@@ -144,7 +233,40 @@
                             <label for="is_active" class="ml-2 block text-sm text-gray-900">Active</label>
                         </div>
 
-                        <div class="flex justify-end">
+                        <!-- Test Prompt Section -->
+                        <div class="mt-6 border-t border-gray-200 pt-6">
+                            <h3 class="text-lg font-medium text-gray-900">Test Prompt</h3>
+                            <p class="mt-1 text-sm text-gray-500">Test how this prompt works with sample values.</p>
+
+                            <div class="mt-4 grid grid-cols-1 gap-4" x-show="currentPrompt.variables && currentPrompt.variables.length > 0">
+                                <template x-for="(variable, index) in currentPrompt.variables" :key="index">
+                                    <div>
+                                        <label :for="'var-' + index" class="block text-sm font-medium text-gray-700" x-text="variable"></label>
+                                        <textarea :id="'var-' + index" rows="2" x-model="sampleValues[variable]"
+                                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"></textarea>
+                                    </div>
+                                </template>
+
+                                <div class="flex justify-end space-x-3">
+                                    <button @click="testPrompt()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                                        Test Prompt
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Test Results -->
+                            <div x-show="testResult" class="mt-4">
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">Test Result</h4>
+                                <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
+                                    <div x-show="testLoading" class="flex justify-center my-4">
+                                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                                    </div>
+                                    <pre x-show="!testLoading" class="whitespace-pre-wrap text-sm" x-text="testResult"></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end mt-6">
                             <button @click="savePrompt()" class="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700">
                                 Save Changes
                             </button>
@@ -167,10 +289,52 @@
             newVariable: '',
             mongodbUrl: 'Loading...',
             newMongodbUrl: '',
+            expandEditor: false,
+            showPreview: false,
+            sampleValues: {},
+            searchQuery: '',
+            componentFilter: '',
+            statusFilter: '',
+            testResult: null,
+            testLoading: false,
 
             init() {
                 this.fetchMongodbConfig();
                 this.fetchPrompts();
+            },
+
+            // Computed property for unique components
+            get uniqueComponents() {
+                if (!this.prompts || this.prompts.length === 0) return [];
+
+                // Extract unique component values
+                const components = [...new Set(this.prompts.map(prompt => prompt.component))];
+                return components.sort();
+            },
+
+            // Computed property for filtered prompts
+            get filteredPrompts() {
+                if (!this.prompts) return [];
+
+                return this.prompts.filter(prompt => {
+                    // Filter by search query
+                    const searchLower = this.searchQuery.toLowerCase();
+                    const matchesSearch = searchLower === '' ||
+                        prompt.name.toLowerCase().includes(searchLower) ||
+                        prompt.description.toLowerCase().includes(searchLower) ||
+                        prompt.component.toLowerCase().includes(searchLower);
+
+                    // Filter by component
+                    const matchesComponent = this.componentFilter === '' ||
+                        prompt.component === this.componentFilter;
+
+                    // Filter by status
+                    const matchesStatus = this.statusFilter === '' ||
+                        (this.statusFilter === 'active' && prompt.is_active) ||
+                        (this.statusFilter === 'inactive' && !prompt.is_active);
+
+                    return matchesSearch && matchesComponent && matchesStatus;
+                });
             },
 
             fetchMongodbConfig() {
@@ -381,6 +545,126 @@
                     this.error = `Failed to initialize default prompts: ${error.message}`;
                     this.loading = false;
                 });
+            },
+
+            // Generate sample values for variables
+            generateSampleValues() {
+                if (!this.currentPrompt || !this.currentPrompt.variables) return {};
+
+                const samples = {};
+                this.currentPrompt.variables.forEach(variable => {
+                    // If we already have a sample value for this variable, keep it
+                    if (this.sampleValues[variable]) {
+                        samples[variable] = this.sampleValues[variable];
+                        return;
+                    }
+
+                    // Generate a sample value based on the variable name
+                    if (variable.includes('description')) {
+                        samples[variable] = 'This is a sample job description for a software engineer position.';
+                    } else if (variable.includes('resume')) {
+                        samples[variable] = 'John Doe\nSoftware Engineer\n\nExperience:\n- Developed web applications using React and Node.js';
+                    } else if (variable.includes('skill')) {
+                        samples[variable] = 'JavaScript, Python, React, Node.js';
+                    } else if (variable.includes('job')) {
+                        samples[variable] = 'Software Engineer';
+                    } else if (variable.includes('format')) {
+                        samples[variable] = 'Please format your response as JSON.';
+                    } else {
+                        samples[variable] = `Sample value for ${variable}`;
+                    }
+                });
+
+                this.sampleValues = samples;
+                return samples;
+            },
+
+            // Render the preview with sample values
+            renderPreview() {
+                if (!this.currentPrompt || !this.currentPrompt.template) return '';
+
+                // Generate sample values if needed
+                const samples = this.generateSampleValues();
+
+                // Replace variables with sample values
+                let preview = this.currentPrompt.template;
+                Object.keys(samples).forEach(variable => {
+                    const regex = new RegExp(`{{\\s*${variable}\\s*}}`, 'g');
+                    preview = preview.replace(regex, `<span class="bg-yellow-100 px-1 rounded">${samples[variable]}</span>`);
+                });
+
+                // Highlight any remaining variables
+                preview = preview.replace(/{{([^}]+)}}/g, '<span class="bg-red-100 px-1 rounded">{{$1}}</span>');
+
+                // Convert newlines to <br> for HTML display
+                preview = preview.replace(/\n/g, '<br>');
+
+                return preview;
+            },
+
+            // Test the prompt with the current sample values
+            testPrompt() {
+                if (!this.currentPrompt || !this.currentPrompt.template) return;
+
+                this.testLoading = true;
+                this.testResult = "Testing prompt...";
+
+                // Prepare the prompt with sample values
+                let filledPrompt = this.currentPrompt.template;
+                const samples = this.sampleValues;
+
+                // Replace variables with sample values
+                Object.keys(samples).forEach(variable => {
+                    const regex = new RegExp(`{{\\s*${variable}\\s*}}`, 'g');
+                    filledPrompt = filledPrompt.replace(regex, samples[variable] || `[${variable}]`);
+                });
+
+                // Check if any variables are still present
+                const remainingVars = filledPrompt.match(/{{([^}]+)}}/g);
+                if (remainingVars) {
+                    this.testResult = `Error: The following variables are missing values: ${remainingVars.join(', ')}`;
+                    this.testLoading = false;
+                    return;
+                }
+
+                // For now, we'll just show the filled prompt as the result
+                // In a real implementation, you would send this to an API endpoint that calls the LLM
+                setTimeout(() => {
+                    this.testResult = "This is a simulated response from the LLM.\n\n" +
+                        "In a real implementation, this would send the filled prompt to an API endpoint " +
+                        "that calls the LLM and returns the response.\n\n" +
+                        "Filled prompt that would be sent to the LLM:\n\n" + filledPrompt;
+                    this.testLoading = false;
+                }, 1500);
+
+                // Uncomment this code when you have an API endpoint to test prompts
+                /*
+                const baseUrl = window.location.origin;
+                fetch(`${baseUrl}/api/prompts-direct/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: filledPrompt,
+                        component: this.currentPrompt.component
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    this.testResult = data.response;
+                    this.testLoading = false;
+                })
+                .catch(error => {
+                    this.testResult = `Error testing prompt: ${error.message}`;
+                    this.testLoading = false;
+                });
+                */
             }
         };
     }
