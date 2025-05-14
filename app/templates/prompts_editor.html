@@ -560,8 +560,21 @@
                 this.loading = true;
                 this.error = null;
 
+                // Validate the data before sending
+                if (!this.currentPrompt.template) {
+                    this.error = "Template cannot be empty";
+                    this.loading = false;
+                    return;
+                }
+
+                if (!Array.isArray(this.currentPrompt.variables) || this.currentPrompt.variables.length === 0) {
+                    this.error = "At least one variable is required";
+                    this.loading = false;
+                    return;
+                }
+
                 const updateData = {
-                    description: this.currentPrompt.description,
+                    description: this.currentPrompt.description || "",
                     template: this.currentPrompt.template,
                     variables: this.currentPrompt.variables,
                     is_active: this.currentPrompt.is_active
@@ -579,7 +592,13 @@
                 .then(response => {
                     console.log('Save prompt response status:', response.status);
                     if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
+                        // Try to get the error details from the response
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.detail || `HTTP error! Status: ${response.status}`);
+                        }).catch(() => {
+                            // If we can't parse the JSON, just throw the HTTP error
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        });
                     }
                     return response.json();
                 })
@@ -590,8 +609,10 @@
                         this.success = 'Prompt saved successfully';
                         this.fetchPrompts();
                         this.currentPrompt = null;
+                    } else if (data.detail) {
+                        throw new Error(data.detail);
                     } else {
-                        throw new Error('Update failed');
+                        throw new Error('Update failed without specific error message');
                     }
                 })
                 .catch(error => {

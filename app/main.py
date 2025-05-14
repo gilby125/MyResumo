@@ -445,22 +445,38 @@ async def update_prompt_direct(prompt_id: str, update_data: dict):
 
         try:
             # Convert to PromptUpdate model
-            prompt_update = PromptUpdate(**update_data)
+            try:
+                prompt_update = PromptUpdate(**update_data)
+            except Exception as validation_error:
+                error_msg = f"Invalid prompt data: {str(validation_error)}"
+                print(error_msg)
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": error_msg}
+                )
 
             # Update prompt
-            success = await repo.update_prompt(prompt_id, prompt_update)
-            if not success:
-                error_msg = "Failed to update prompt"
+            try:
+                success = await repo.update_prompt(prompt_id, prompt_update)
+                if not success:
+                    error_msg = "Failed to update prompt - no document was modified"
+                    print(error_msg)
+                    return JSONResponse(
+                        status_code=500,
+                        content={"detail": error_msg}
+                    )
+
+                print(f"Successfully updated prompt {prompt_id}")
+                return {"success": True}
+            except Exception as update_error:
+                error_msg = f"Database error while updating prompt: {str(update_error)}"
                 print(error_msg)
                 return JSONResponse(
                     status_code=500,
                     content={"detail": error_msg}
                 )
-
-            print(f"Successfully updated prompt {prompt_id}")
-            return {"success": True}
         except Exception as model_error:
-            error_msg = f"Error creating PromptUpdate model: {str(model_error)}"
+            error_msg = f"Error processing prompt update: {str(model_error)}"
             print(error_msg)
             return JSONResponse(
                 status_code=400,

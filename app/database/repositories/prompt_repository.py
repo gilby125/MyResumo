@@ -145,7 +145,11 @@ class PromptRepository(BaseRepository):
 
         # Update in database
         result = await self.update_one({"id": prompt_id_str}, {"$set": update_dict})
-        return result.modified_count > 0
+        # Handle both boolean and result object returns
+        if isinstance(result, bool):
+            return result
+        else:
+            return result.modified_count > 0
 
     async def delete_prompt(self, prompt_id: Union[str, UUID]) -> bool:
         """Delete a prompt template.
@@ -158,7 +162,11 @@ class PromptRepository(BaseRepository):
         """
         prompt_id_str = str(prompt_id)
         result = await self.delete_one({"id": prompt_id_str})
-        return result.deleted_count > 0
+        # Handle both boolean and result object returns
+        if isinstance(result, bool):
+            return result
+        else:
+            return result.deleted_count > 0
 
     async def initialize_default_prompts(self) -> None:
         """Initialize the database with default prompts if they don't exist.
