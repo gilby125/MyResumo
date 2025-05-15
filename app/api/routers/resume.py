@@ -138,6 +138,15 @@ class ResumeScoreResponse(BaseModel):
     job_requirements: List[str] = Field(
         [], description="Requirements extracted from the job description"
     )
+    optimization_success: bool = Field(
+        False, description="Whether the optimization was successful"
+    )
+    optimized_score: Optional[int] = Field(
+        None, description="ATS score of the optimized resume"
+    )
+    score_improvement: int = Field(
+        0, description="Score improvement after optimization"
+    )
 
 
 resume_router = APIRouter(prefix="/api/resume", tags=["Resume"])
@@ -740,10 +749,11 @@ async def score_resume(
     request: Request,
     repo: ResumeRepository = Depends(get_resume_repository),
 ):
-    """Score a resume against a job description using ATS algorithms.
+    """Score a resume against a job description and generate an optimized version in one step.
 
-    This endpoint analyzes the resume against the provided job description and
-    returns an ATS compatibility score along with matching skills and recommendations.
+    This endpoint analyzes the resume against the provided job description,
+    returns an ATS compatibility score, and also generates an optimized version
+    of the resume tailored to the job description.
 
     Args:
         resume_id: ID of the resume to score
@@ -753,7 +763,7 @@ async def score_resume(
 
     Returns:
     -------
-        ResumeScoreResponse: Contains the ATS score and skill analysis
+        ResumeScoreResponse: Contains the ATS score, skill analysis, and optimization status
 
     Raises:
     ------
@@ -824,40 +834,97 @@ async def score_resume(
                 detail="Job description is required for scoring",
             )
 
-        # Get resume content - first check if optimized data exists, use that for comparison
+        # Get resume content
         resume_content = resume["original_content"]
 
-        # Optionally also score the optimized version if it exists
-        optimized_data = resume.get("optimized_data")
-        optimized_score = None
-
-        # Score the original resume
+        # 1. Score the original resume
         logger.info("Scoring original resume against job description")
         score_result = await ats_scorer.compute_match_score(
             resume_content, job_description
         )
         ats_score = int(score_result["final_score"])
+        logger.info(f"Original resume ATS score: {ats_score}")
 
-        # If optimized data exists, score it too for comparison
-        if optimized_data:
-            logger.info("Scoring optimized resume for comparison")
-            if isinstance(optimized_data, str):
-                optimized_content = optimized_data
+        # 2. Generate optimized version in the same step
+        logger.info("Generating optimized resume version")
+
+        # Initialize optimizer
+        logger.info(f"Initializing AtsResumeOptimizer with temperature: {scoring_request.temperature}")
+        optimizer = AtsResumeOptimizer(
+            model_name=model_name,
+            resume=resume_content,
+            api_key=api_key,
+            api_base=api_base_url,
+            temperature=scoring_request.temperature,
+        )
+
+        # Generate optimized resume
+        optimization_success = False
+        optimized_data = None
+        optimized_score = None
+        score_improvement = 0
+
+        try:
+            # Generate optimized resume
+            logger.info("Calling AI service to generate optimized resume")
+            optimization_result = await optimizer.generate_ats_optimized_resume_json(job_description)
+
+            # Check for errors in optimization result
+            if "error" in optimization_result:
+                logger.error(f"AI service returned an error during optimization: {optimization_result.get('error')}")
+                # Continue with scoring only, don't fail the whole request
             else:
-                optimized_content = json.dumps(optimized_data)
+                # Parse the optimized data
+                try:
+                    optimized_data = ResumeData.model_validate(optimization_result)
+                    logger.info("Successfully validated optimization result through Pydantic model")
 
-            optimized_score_result = await ats_scorer.compute_match_score(
-                optimized_content, job_description
-            )
-            optimized_score = int(optimized_score_result["final_score"])
-            logger.info(f"Original score: {ats_score}, Optimized score: {optimized_score}")
+                    # Score the optimized resume
+                    logger.info("Scoring optimized resume")
+                    optimized_resume_text = json.dumps(optimization_result)
+                    optimized_score_result = await ats_scorer.compute_match_score(
+                        optimized_resume_text, job_description
+                    )
+                    optimized_score = int(optimized_score_result["final_score"])
+                    logger.info(f"Optimized resume ATS score: {optimized_score}")
 
-        # Prepare enhanced recommendation if we have both scores
+                    # Calculate improvement
+                    score_improvement = optimized_score - ats_score
+                    logger.info(f"Score improvement: {score_improvement}")
+
+                    # Update database with optimized data
+                    logger.info(f"Updating resume {resume_id} with optimized data")
+                    await repo.update_optimized_data(
+                        resume_id, optimized_data.model_dump(), optimized_score,
+                        original_ats_score=ats_score,
+                        matching_skills=score_result.get("matching_skills", []),
+                        missing_skills=score_result.get("missing_skills", []),
+                        score_improvement=score_improvement,
+                        recommendation=score_result.get("recommendation", "")
+                    )
+                    optimization_success = True
+                except Exception as validation_error:
+                    logger.error(f"Failed to process optimization result: {str(validation_error)}")
+                    logger.error(f"Error details: {traceback.format_exc()}")
+        except Exception as optimization_error:
+            logger.error(f"Error during resume optimization: {str(optimization_error)}")
+            logger.error(f"Error details: {traceback.format_exc()}")
+            # Continue with scoring only, don't fail the whole request
+
+        # Prepare enhanced recommendation
         recommendation = score_result.get("recommendation", "")
-        if optimized_score:
-            improvement = optimized_score - ats_score
-            if improvement > 0:
-                recommendation += f"\n\nYour optimized resume scores {improvement} points higher ({optimized_score}%). Consider using the optimized version for better results."
+        if optimization_success and score_improvement > 0:
+            recommendation += f"\n\nYour optimized resume scores {score_improvement} points higher ({optimized_score}%). The optimized version is now available in your dashboard."
+
+        # Save the job description and temperature to the resume
+        logger.info(f"Saving job description and temperature ({scoring_request.temperature}) to resume {resume_id}")
+        await repo.update_resume(
+            resume_id,
+            {
+                "job_description": job_description,
+                "last_used_temperature": scoring_request.temperature
+            }
+        )
 
         return {
             "resume_id": resume_id,
@@ -867,6 +934,9 @@ async def score_resume(
             "recommendation": recommendation,
             "resume_skills": score_result.get("resume_skills", []),
             "job_requirements": score_result.get("job_requirements", []),
+            "optimization_success": optimization_success,
+            "optimized_score": optimized_score,
+            "score_improvement": score_improvement if optimization_success else 0
         }
 
     except Exception as e:
