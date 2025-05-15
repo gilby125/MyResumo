@@ -315,7 +315,15 @@ async def get_all_prompts_direct():
         print(f"Using MongoDB URL: {mongodb_url}")
 
         repo = PromptRepository(connection_string=mongodb_url)
-        prompts = await repo.get_all_prompts()
+
+        # First check if we have any prompts
+        prompts = await repo.get_all_prompts(include_inactive=True)
+
+        # If no prompts found, initialize default prompts
+        if not prompts:
+            print("No prompts found, initializing default prompts...")
+            await repo.initialize_default_prompts()
+            prompts = await repo.get_all_prompts(include_inactive=True)
 
         print(f"Retrieved {len(prompts)} prompts from database")
 
@@ -358,7 +366,9 @@ async def get_all_prompts_direct():
                 prompt["version"] = 1
 
             try:
-                formatted_prompts.append(PromptResponse(**prompt))
+                # Convert to dict to avoid serialization issues
+                prompt_response = PromptResponse(**prompt)
+                formatted_prompts.append(prompt_response.model_dump())
             except Exception as prompt_err:
                 print(f"Error formatting prompt: {str(prompt_err)}, prompt: {prompt}")
                 # Add a simplified version if full conversion fails
