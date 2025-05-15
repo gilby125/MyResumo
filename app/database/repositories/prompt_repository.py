@@ -159,19 +159,10 @@ class PromptRepository(BaseRepository):
             print(f"Updating prompt with ID {prompt_id_str}")
             result = await self.update_one({"id": prompt_id_str}, {"$set": update_dict})
 
-            # Handle the result safely
-            if result is True or result is False:
-                print(f"Update result is boolean: {result}")
-                return result
-            elif hasattr(result, 'modified_count'):
-                modified = result.modified_count > 0
-                print(f"Update result has modified_count: {result.modified_count}, returning {modified}")
-                return modified
-            else:
-                print(f"Unknown result type: {type(result)}, value: {result}")
-                # Default to True if we can't determine the result
-                # This is safer than returning False which might trigger error handling
-                return True
+            # The update_one method in base_repo.py returns a boolean
+            # indicating whether the update was successful
+            print(f"Update result: {result}, type: {type(result)}")
+            return result
         except Exception as e:
             print(f"Error during database update: {str(e)}")
             return False
@@ -190,18 +181,10 @@ class PromptRepository(BaseRepository):
             print(f"Deleting prompt with ID {prompt_id_str}")
             result = await self.delete_one({"id": prompt_id_str})
 
-            # Handle the result safely
-            if result is True or result is False:
-                print(f"Delete result is boolean: {result}")
-                return result
-            elif hasattr(result, 'deleted_count'):
-                deleted = result.deleted_count > 0
-                print(f"Delete result has deleted_count: {result.deleted_count}, returning {deleted}")
-                return deleted
-            else:
-                print(f"Unknown result type: {type(result)}, value: {result}")
-                # Default to True if we can't determine the result
-                return True
+            # The delete_one method in base_repo.py returns a boolean
+            # indicating whether the deletion was successful
+            print(f"Delete result: {result}, type: {type(result)}")
+            return result
         except Exception as e:
             print(f"Error during prompt deletion: {str(e)}")
             return False

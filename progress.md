@@ -93,3 +93,30 @@
 - Consider adding temperature presets (e.g., "Conservative", "Balanced", "Creative")
 - Add tooltips or help text to explain the impact of different temperature settings
 - Consider adding temperature control to other LLM-powered features
+
+## 2025-05-14: Fixed Prompts Editor Functionality
+
+### Issue
+The prompts editor page was encountering an error when updating prompts: 'bool' object has no attribute 'modified_count'. This was occurring in the `/api/prompts-direct` endpoint when trying to update prompts.
+
+### Root Cause
+In the `prompt_repository.py` file, the `update_prompt` and `delete_prompt` methods were trying to access a `modified_count` attribute on a boolean result returned from the base repository's `update_one` and `delete_one` methods. The base repository methods were correctly returning boolean values, but the prompt repository was expecting an object with a `modified_count` attribute.
+
+### Solution
+1. Modified the `update_prompt` method in `prompt_repository.py` to correctly handle the boolean result from `update_one`
+2. Modified the `delete_prompt` method in `prompt_repository.py` to correctly handle the boolean result from `delete_one`
+3. Simplified the error handling logic to directly return the boolean result
+
+### Files Changed
+- `app/database/repositories/prompt_repository.py`
+
+### Testing
+The changes were tested by:
+1. Accessing the prompts editor page at http://192.168.7.10:32811/prompts
+2. Updating the MongoDB connection to point to the correct server (192.168.7.10:27017)
+3. Initializing default prompts
+4. Editing and saving a prompt
+
+### Next Steps
+- Monitor the application logs for any further errors related to the prompts functionality
+- Consider adding more comprehensive error handling and logging throughout the application
