@@ -317,7 +317,10 @@ class AtsResumeOptimizer:
         2. The "two_goals_of_the_project" array must contain EXACTLY 2 items for each project
         3. Make sure all dates follow a consistent format (YYYY-MM or MM/YYYY)
         4. Ensure all fields are filled with appropriate data extracted from the resume
-        5. Return ONLY the JSON object with no other text
+        5. Return ONLY the JSON object with no other text, explanation, or commentary
+        6. DO NOT include any text like "Here's the optimized resume" or "Here's the JSON"
+        7. Your response MUST be a valid JSON object that can be parsed with json.loads()
+        8. DO NOT wrap the JSON in markdown code blocks or any other formatting
         """
         return PromptTemplate.from_template(template=template)
 
@@ -478,43 +481,94 @@ class AtsResumeOptimizer:
 
                     return json_result
                 except json.JSONDecodeError:
+                    print(f"JSON decode error. Trying fallback methods. Content starts with: {content[:100]}...")
+
                     # Fallback 1: Extract JSON from code blocks
                     json_match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", content)
                     if json_match:
-                        json_str = json_match.group(1)
-                        json_result = json.loads(json_str)
+                        try:
+                            json_str = json_match.group(1)
+                            json_result = json.loads(json_str)
 
-                        # Enrich result with ATS analysis metrics
-                        if score_results:
-                            json_result["ats_metrics"] = {
-                                "initial_score": score_results.get("final_score", 0),
-                                "matching_skills": score_results.get("matching_skills", []),
-                                "missing_skills": score_results.get("missing_skills", []),
-                                "recommendation": score_results.get("recommendation", "")
-                            }
+                            # Enrich result with ATS analysis metrics
+                            if score_results:
+                                json_result["ats_metrics"] = {
+                                    "initial_score": score_results.get("final_score", 0),
+                                    "matching_skills": score_results.get("matching_skills", []),
+                                    "missing_skills": score_results.get("missing_skills", []),
+                                    "recommendation": score_results.get("recommendation", "")
+                                }
 
-                        return json_result
+                            return json_result
+                        except json.JSONDecodeError:
+                            print(f"Failed to parse JSON from code block. Trying next method.")
 
                     # Fallback 2: Find any JSON-like structure in the response
                     json_str = re.search(r"(\{[\s\S]*\})", content)
                     if json_str:
-                        json_result = json.loads(json_str.group(1))
+                        try:
+                            json_result = json.loads(json_str.group(1))
 
-                        # Enrich result with ATS analysis metrics
-                        if score_results:
-                            json_result["ats_metrics"] = {
-                                "initial_score": score_results.get("final_score", 0),
-                                "matching_skills": score_results.get("matching_skills", []),
-                                "missing_skills": score_results.get("missing_skills", []),
-                                "recommendation": score_results.get("recommendation", "")
-                            }
+                            # Enrich result with ATS analysis metrics
+                            if score_results:
+                                json_result["ats_metrics"] = {
+                                    "initial_score": score_results.get("final_score", 0),
+                                    "matching_skills": score_results.get("matching_skills", []),
+                                    "missing_skills": score_results.get("missing_skills", []),
+                                    "recommendation": score_results.get("recommendation", "")
+                                }
 
-                        return json_result
+                            return json_result
+                        except json.JSONDecodeError:
+                            print(f"Failed to parse JSON-like structure. Trying next method.")
 
-                    # No valid JSON found in the response
-                    return {
-                        "error": f"Could not extract valid JSON from response: {content[:100]}..."
+                    # Fallback 3: If the response is text, try to convert it to a structured format
+                    print("All JSON extraction methods failed. Attempting to create structured data from text response.")
+
+                    # Create a basic structured response from the text
+                    # This is a last resort when the AI returns text instead of JSON
+                    structured_response = {
+                        "user_information": {
+                            "name": "",
+                            "main_job_title": "",
+                            "profile_description": content[:500],  # Use the first part of the content as profile
+                            "email": "",
+                            "linkedin": "",
+                            "github": "",
+                            "experiences": [],
+                            "education": [],
+                            "skills": {
+                                "hard_skills": [],
+                                "soft_skills": []
+                            },
+                            "hobbies": []
+                        },
+                        "projects": [],
+                        "certificate": [],
+                        "extra_curricular_activities": [],
+                        "raw_text_response": content  # Store the full text response
                     }
+
+                    # Extract skills from the ATS scoring if available
+                    if score_results:
+                        matching_skills = score_results.get("matching_skills", [])
+                        if matching_skills:
+                            # Add matching skills as hard skills
+                            structured_response["user_information"]["skills"]["hard_skills"] = matching_skills
+
+                        # Add ATS metrics
+                        structured_response["ats_metrics"] = {
+                            "initial_score": score_results.get("final_score", 0),
+                            "matching_skills": score_results.get("matching_skills", []),
+                            "missing_skills": score_results.get("missing_skills", []),
+                            "recommendation": score_results.get("recommendation", "")
+                        }
+
+                    print("Created structured response from text. This is a fallback and may not contain all expected data.")
+                    return structured_response
+
+                    # We no longer return an error here, instead we provide a structured response
+                    # with the raw text included
             except Exception as e:
                 return {
                     "error": f"JSON parsing error: {str(e)}",

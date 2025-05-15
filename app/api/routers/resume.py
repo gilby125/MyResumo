@@ -552,18 +552,89 @@ async def optimize_resume(
         # 9. Parse and validate result
         logger.info("Parsing result into ResumeData model")
         try:
+            # Check if the result contains raw_text_response, which indicates it's a fallback structured response
+            if "raw_text_response" in result:
+                logger.warning("Using fallback structured response from text. This may not contain all expected data.")
+                # We'll still try to validate it, but we'll log a warning
+
             optimized_data = ResumeData.model_validate(result)
             logger.info("Successfully validated result through Pydantic model")
+
+            # If this is a fallback response, add a note to the profile description
+            if "raw_text_response" in result:
+                # Add a note to the profile description
+                original_profile = optimized_data.user_information.profile_description
+                note = "\n\nNote: This resume was generated from a text response and may not be fully structured. Please review and edit as needed."
+                optimized_data.user_information.profile_description = original_profile + note
+
         except Exception as validation_error:
             logger.error(
                 f"Failed to parse result into ResumeData model: {str(validation_error)}"
             )
             logger.error(f"Validation error details: {traceback.format_exc()}")
             logger.debug(f"Problematic data: {result}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error parsing AI response: {str(validation_error)}",
-            )
+
+            # Check if we have a raw text response we can use
+            if isinstance(result, dict) and "raw_text_response" in result:
+                logger.warning("Validation failed but raw text response is available. Creating minimal valid structure.")
+
+                # Create a minimal valid structure that will pass validation
+                minimal_result = {
+                    "user_information": {
+                        "name": "",
+                        "main_job_title": "Generated from Text Response",
+                        "profile_description": "The AI generated a text response instead of structured data. Here's the beginning of that response:\n\n" +
+                                              result.get("raw_text_response", "")[:500] +
+                                              "\n\n(Note: This resume was generated from a text response and may not be fully structured. Please review and edit as needed.)",
+                        "email": "",
+                        "linkedin": "",
+                        "github": "",
+                        "experiences": [
+                            {
+                                "job_title": "See Profile Description",
+                                "company": "Text Response",
+                                "start_date": "",
+                                "end_date": "",
+                                "location": "",
+                                "four_tasks": [
+                                    "Please see the profile description for the full text response.",
+                                    "The AI generated a text response instead of structured data.",
+                                    "You may want to try optimizing again with different settings.",
+                                    "Or you can manually extract information from the text response."
+                                ]
+                            }
+                        ],
+                        "education": [],
+                        "skills": {
+                            "hard_skills": result.get("user_information", {}).get("skills", {}).get("hard_skills", []),
+                            "soft_skills": []
+                        },
+                        "hobbies": []
+                    },
+                    "projects": [],
+                    "certificate": [],
+                    "extra_curricular_activities": []
+                }
+
+                # Add ATS metrics if available
+                if "ats_metrics" in result:
+                    minimal_result["ats_metrics"] = result["ats_metrics"]
+
+                try:
+                    optimized_data = ResumeData.model_validate(minimal_result)
+                    logger.info("Successfully created and validated minimal structure from raw text response")
+                except Exception as second_validation_error:
+                    logger.error(f"Failed to create minimal valid structure: {str(second_validation_error)}")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"Error parsing AI response: {str(validation_error)}",
+                    )
+            else:
+                # If we don't have a raw text response, raise the original error
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error parsing AI response: {str(validation_error)}",
+                )
 
         # 10. Score the optimized resume
         logger.info("Generating JSON text representation of the optimized resume")
