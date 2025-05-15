@@ -66,9 +66,25 @@ echo "Found GitHub repository directory: $GITHUB_DIR"
 echo "Pulling latest code from GitHub..."
 execute_remote_command "cd $GITHUB_DIR && git pull"
 
-# Restart the container
-echo "Restarting the container..."
-execute_remote_command "docker restart $APP_CONTAINER"
+# Update the version file to force cache invalidation
+echo "Updating version file..."
+execute_remote_command "cd $GITHUB_DIR && bash scripts/update-version.sh"
+
+# Rebuild the container with no cache
+echo "Rebuilding the container with no cache..."
+execute_remote_command "cd $GITHUB_DIR && docker build --no-cache -t myresumo:latest ."
+
+# Stop the current container
+echo "Stopping the current container..."
+execute_remote_command "docker stop $APP_CONTAINER"
+
+# Remove the current container
+echo "Removing the current container..."
+execute_remote_command "docker rm $APP_CONTAINER"
+
+# Start a new container with the same configuration
+echo "Starting a new container..."
+execute_remote_command "cd $GITHUB_DIR && docker-compose up -d"
 
 # Check the status of the container
 echo "Container status:"

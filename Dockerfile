@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Multi-stage build for a smaller final image
-FROM python:3.13-slim   
+FROM python:3.13-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -41,6 +41,9 @@ WORKDIR /code
 # Copy installed packages from builder stage
 COPY --from=builder /usr/local/lib/python3.13/site-packages/ /usr/local/lib/python3.13/site-packages/
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
+
+# Copy version file to invalidate cache
+COPY ./version.txt /code/version.txt
 
 # Copy application code
 COPY ./app /code/app
