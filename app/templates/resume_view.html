@@ -53,7 +53,7 @@
         <!-- ATS Score -->
         <div class="px-4 py-5 border-b border-gray-200 sm:px-6">
             <h3 class="text-lg leading-6 font-medium text-gray-900">ATS Compatibility Score</h3>
-            
+
             <!-- Score Comparison -->
             <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <!-- Original Score -->
@@ -62,7 +62,7 @@
                     <div class="relative pt-1">
                         <div class="flex items-center justify-between">
                             <div>
-                                <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full" 
+                                <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full"
                                       :class="{
                                           'text-green-600 bg-green-200': (resume.original_ats_score || resume.ats_score || 0) >= 80,
                                           'text-yellow-600 bg-yellow-200': (resume.original_ats_score || resume.ats_score || 0) >= 60 && (resume.original_ats_score || resume.ats_score || 0) < 80,
@@ -80,7 +80,7 @@
                             </div>
                         </div>
                         <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200 mt-2">
-                            <div :style="`width: ${resume.original_ats_score || resume.ats_score || 0}%`" 
+                            <div :style="`width: ${resume.original_ats_score || resume.ats_score || 0}%`"
                                  :class="{
                                      'bg-green-500': (resume.original_ats_score || resume.ats_score || 0) >= 80,
                                      'bg-yellow-500': (resume.original_ats_score || resume.ats_score || 0) >= 60 && (resume.original_ats_score || resume.ats_score || 0) < 80,
@@ -97,7 +97,7 @@
                     <div class="relative pt-1">
                         <div class="flex items-center justify-between">
                             <div>
-                                <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full" 
+                                <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full"
                                       :class="{
                                           'text-green-600 bg-green-200': (resume.optimized_ats_score || resume.ats_score || 0) >= 80,
                                           'text-yellow-600 bg-yellow-200': (resume.optimized_ats_score || resume.ats_score || 0) >= 60 && (resume.optimized_ats_score || resume.ats_score || 0) < 80,
@@ -115,7 +115,7 @@
                             </div>
                         </div>
                         <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200 mt-2">
-                            <div :style="`width: ${resume.optimized_ats_score || resume.ats_score || 0}%`" 
+                            <div :style="`width: ${resume.optimized_ats_score || resume.ats_score || 0}%`"
                                  :class="{
                                      'bg-green-500': (resume.optimized_ats_score || resume.ats_score || 0) >= 80,
                                      'bg-yellow-500': (resume.optimized_ats_score || resume.ats_score || 0) >= 60 && (resume.optimized_ats_score || resume.ats_score || 0) < 80,
@@ -126,7 +126,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Score Improvement -->
             <div class="mt-4 flex items-center">
                 <div class="mr-3 rounded-full p-1.5" :class="{'bg-green-100': (resume.score_improvement || 0) > 0, 'bg-yellow-100': (resume.score_improvement || 0) === 0, 'bg-red-100': (resume.score_improvement || 0) < 0}">
@@ -220,7 +220,7 @@
             <!-- Skills -->
             <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
                 <h3 class="text-lg font-medium leading-6 text-gray-900">Skills</h3>
-                
+
                 <div class="mt-4">
                     <h4 class="text-md font-medium text-gray-700">Hard Skills</h4>
                     <div class="mt-2 flex flex-wrap gap-2">
@@ -234,7 +234,7 @@
                         </template>
                     </div>
                 </div>
-                
+
                 <div class="mt-4">
                     <h4 class="text-md font-medium text-gray-700">Soft Skills</h4>
                     <div class="mt-2 flex flex-wrap gap-2">
@@ -253,7 +253,7 @@
             <!-- Experience -->
             <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
                 <h3 class="text-lg font-medium leading-6 text-gray-900">Work Experience</h3>
-                
+
                 <div class="mt-4 divide-y divide-gray-200">
                     <template x-for="(experience, index) in resume.optimized_data?.user_information?.experiences || []" :key="index">
                         <div class="py-4">
@@ -290,7 +290,7 @@
             <!-- Education -->
             <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
                 <h3 class="text-lg font-medium leading-6 text-gray-900">Education</h3>
-                
+
                 <div class="mt-4 divide-y divide-gray-200">
                     <template x-for="(education, index) in resume.optimized_data?.user_information?.education || []" :key="index">
                         <div class="py-4">
@@ -313,7 +313,7 @@
             <!-- Projects -->
             <div x-show="resume.optimized_data?.projects?.length > 0" class="border-t border-gray-200 px-4 py-5 sm:px-6">
                 <h3 class="text-lg font-medium leading-6 text-gray-900">Projects</h3>
-                
+
                 <div class="mt-4 divide-y divide-gray-200">
                     <template x-for="(project, index) in resume.optimized_data?.projects || []" :key="index">
                         <div class="py-4">
@@ -325,7 +325,7 @@
                                 <!-- Add project end result as a list item for consistent formatting -->
                                 <li x-text="project.project_end_result"></li>
                             </ul>
-                            
+
                             <!-- Tech Stack -->
                             <template x-if="project.tech_stack && project.tech_stack.length > 0">
                                 <div class="mt-3">
@@ -347,7 +347,7 @@
             <!-- Extra Curricular Activities -->
             <div x-show="resume.optimized_data?.extra_curricular_activities?.length > 0" class="border-t border-gray-200 px-4 py-5 sm:px-6">
                 <h3 class="text-lg font-medium leading-6 text-gray-900">Extra Curricular Activities</h3>
-                
+
                 <div class="mt-4 divide-y divide-gray-200">
                     <template x-for="(activity, index) in resume.optimized_data?.extra_curricular_activities || []" :key="index">
                         <div class="py-4">
@@ -398,38 +398,96 @@
             isLoading: true,
             hasError: false,
             errorMessage: '',
-            
+
             // Initialize
             async init() {
+                // Validate resume ID
+                if (!this.resumeId || this.resumeId === 'undefined') {
+                    this.isLoading = false;
+                    this.hasError = true;
+                    this.errorMessage = 'Invalid resume ID. Please go back to the dashboard and try again.';
+                    console.error('Invalid resume ID:', this.resumeId);
+
+                    // Redirect to dashboard after a short delay
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 3000);
+                    return;
+                }
+
                 await this.loadResume();
             },
-            
+
             // Load resume data from API
             async loadResume() {
                 this.isLoading = true;
                 this.hasError = false;
-                
+
                 try {
+                    // Double-check resume ID before making the request
+                    if (!this.resumeId || this.resumeId === 'undefined') {
+                        throw new Error('Invalid resume ID. Please go back to the dashboard and try again.');
+                    }
+
                     const response = await fetch(`/api/resume/${this.resumeId}`);
+
+                    if (response.status === 404) {
+                        this.errorMessage = 'Resume not found. Please go back to the dashboard and try again.';
+                        this.hasError = true;
+                        console.error('Resume not found');
+
+                        // Redirect to dashboard after a short delay
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 3000);
+                        return;
+                    }
+
+                    if (response.status === 400) {
+                        this.errorMessage = 'Invalid resume ID. Please go back to the dashboard and try again.';
+                        this.hasError = true;
+                        console.error('Invalid resume ID');
+
+                        // Redirect to dashboard after a short delay
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 3000);
+                        return;
+                    }
+
                     if (!response.ok) {
                         throw new Error(`Failed to load resume: ${response.statusText}`);
                     }
-                    
+
                     this.resume = await response.json();
                 } catch (error) {
                     this.hasError = true;
                     this.errorMessage = error.message || 'An error occurred while loading the resume';
                     console.error('Error loading resume:', error);
+
+                    // Redirect to dashboard for serious errors
+                    if (error.message.includes('Invalid resume ID')) {
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 3000);
+                    }
                 } finally {
                     this.isLoading = false;
                 }
             },
-            
+
             // Download resume as PDF
             downloadResume() {
+                // Validate resume ID before attempting to download
+                if (!this.resumeId || this.resumeId === 'undefined') {
+                    console.error('Cannot download: Invalid resume ID');
+                    window.showErrorToast('Invalid resume ID. Please go back to the dashboard and try again.');
+                    return;
+                }
+
                 window.open(`/api/resume/${this.resumeId}/download?use_optimized=true`, '_blank');
             },
-            
+
             // Format date
             formatDate(dateString) {
                 if (!dateString) return '';

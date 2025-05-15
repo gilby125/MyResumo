@@ -251,16 +251,32 @@ async def get_resume(
 
     Raises:
     ------
-        HTTPException: If the resume is not found
+        HTTPException: If the resume is not found or ID is invalid
     """
-    resume_data = await repo.get_resume_by_id(resume_id)
-    if not resume_data:
+    # Check if resume_id is "undefined" or invalid
+    if resume_id == "undefined" or not resume_id:
+        logger.error(f"Invalid resume ID: {resume_id}")
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume with ID {resume_id} not found",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid resume ID. Please provide a valid resume ID.",
         )
-    resume_data["id"] = str(resume_data.pop("_id"))
-    return resume_data
+
+    try:
+        resume_data = await repo.get_resume_by_id(resume_id)
+        if not resume_data:
+            logger.warning(f"Resume with ID {resume_id} not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Resume with ID {resume_id} not found",
+            )
+        resume_data["id"] = str(resume_data.pop("_id"))
+        return resume_data
+    except Exception as e:
+        logger.error(f"Error retrieving resume with ID {resume_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving resume: {str(e)}",
+        )
 
 
 @resume_router.get(
@@ -418,14 +434,29 @@ async def optimize_resume(
     """
     logger.info(f"Starting resume optimization for resume_id: {resume_id}")
 
+    # Check if resume_id is "undefined" or invalid
+    if resume_id == "undefined" or not resume_id:
+        logger.error(f"Invalid resume ID for optimization: {resume_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid resume ID. Please provide a valid resume ID.",
+        )
+
     # 1. Retrieve resume
     logger.info(f"Retrieving resume with ID: {resume_id}")
-    resume = await repo.get_resume_by_id(resume_id)
-    if not resume:
-        logger.warning(f"Resume not found with ID: {resume_id}")
+    try:
+        resume = await repo.get_resume_by_id(resume_id)
+        if not resume:
+            logger.warning(f"Resume not found with ID: {resume_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Resume with ID {resume_id} not found",
+            )
+    except Exception as e:
+        logger.error(f"Error retrieving resume with ID {resume_id}: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume with ID {resume_id} not found",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving resume: {str(e)}",
         )
     logger.info(f"Successfully retrieved resume: {resume.get('title', 'Untitled')}")
 
@@ -644,14 +675,29 @@ async def score_resume(
     """
     logger.info(f"Starting resume scoring for resume_id: {resume_id}")
 
+    # Check if resume_id is "undefined" or invalid
+    if resume_id == "undefined" or not resume_id:
+        logger.error(f"Invalid resume ID for scoring: {resume_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid resume ID. Please provide a valid resume ID.",
+        )
+
     # Retrieve resume
     logger.info(f"Retrieving resume with ID: {resume_id}")
-    resume = await repo.get_resume_by_id(resume_id)
-    if not resume:
-        logger.warning(f"Resume not found with ID: {resume_id}")
+    try:
+        resume = await repo.get_resume_by_id(resume_id)
+        if not resume:
+            logger.warning(f"Resume not found with ID: {resume_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Resume with ID {resume_id} not found",
+            )
+    except Exception as e:
+        logger.error(f"Error retrieving resume with ID {resume_id}: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume with ID {resume_id} not found",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving resume: {str(e)}",
         )
 
     # Get API configuration
@@ -791,11 +837,27 @@ async def download_resume(
     ------
         HTTPException: If the resume is not found or PDF generation fails
     """
-    resume = await repo.get_resume_by_id(resume_id)
-    if not resume:
+    # Check if resume_id is "undefined" or invalid
+    if resume_id == "undefined" or not resume_id:
+        logger.error(f"Invalid resume ID for download: {resume_id}")
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume with ID {resume_id} not found",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid resume ID. Please provide a valid resume ID.",
+        )
+
+    try:
+        resume = await repo.get_resume_by_id(resume_id)
+        if not resume:
+            logger.warning(f"Resume not found with ID: {resume_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Resume with ID {resume_id} not found",
+            )
+    except Exception as e:
+        logger.error(f"Error retrieving resume with ID {resume_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving resume: {str(e)}",
         )
     if use_optimized and not resume.get("optimized_data"):
         raise HTTPException(
