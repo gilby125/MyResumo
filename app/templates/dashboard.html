@@ -494,20 +494,17 @@
                     </div>
                     <div class="mt-3 text-center sm:mt-5">
                         <h3 class="text-lg leading-6 font-medium text-gray-900" id="score-modal-title">
-                            Score Resume Against Job Description
+                            Score & Optimize Resume
                         </h3>
                         <div class="mt-2">
                             <p class="text-sm text-gray-500">
-                                Enter a job description to score your resume against. This will analyze how well your resume matches the job requirements without optimizing it.
+                                Enter a job description to score and optimize your resume. This will analyze how well your resume matches the job requirements and create an improved version tailored to the position.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Loading spinner -->
-                <div x-show="isScoring" class="mt-4 flex justify-center">
-                    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                </div>
+                <!-- Progress information is shown below -->
 
                 <div x-show="!isScoring" class="mt-4">
                     <div>
@@ -543,11 +540,51 @@
                     </div>
                 </div>
 
+                <!-- Progress Information (shown when scoring) -->
+                <div x-show="isScoring" class="mt-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-blue-800 mb-2">Processing Your Resume</h4>
+
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                <span class="text-xs text-blue-700">Analyzing resume against job description</span>
+                            </div>
+
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                                <span class="text-xs text-blue-700">Generating optimized version</span>
+                            </div>
+
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                                <span class="text-xs text-blue-700">Calculating improvement score</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <div class="w-full bg-blue-200 rounded-full h-1.5">
+                                <div class="bg-blue-600 h-1.5 rounded-full animate-pulse"></div>
+                            </div>
+                            <p class="mt-2 text-xs text-blue-600">
+                                This process typically takes 30-60 seconds. We're using AI to analyze your resume, identify missing skills, and create an optimized version tailored to the job description.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
                     <button @click="submitScoreResume()" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm" :disabled="isScoring || !jobDescription.trim()">
-                        Score Resume
+                        <span x-show="!isScoring">Score & Optimize Resume</span>
+                        <span x-show="isScoring">Processing...</span>
                     </button>
-                    <button @click="cancelScoreModal()" type="button" class="mt-3 sm:mt-0 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-1 sm:text-sm">
+                    <button @click="cancelScoreModal()" type="button" class="mt-3 sm:mt-0 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-1 sm:text-sm" :disabled="isScoring">
                         Cancel
                     </button>
                 </div>
@@ -579,7 +616,7 @@
                     </div>
                     <div class="mt-3 text-center sm:mt-5">
                         <h3 class="text-lg leading-6 font-medium text-gray-900" id="score-results-modal-title">
-                            ATS Score Results
+                            Resume Analysis & Optimization Results
                         </h3>
                         <div class="mt-2">
                             <div class="flex justify-center items-center">
@@ -653,7 +690,7 @@
 
                     <!-- Optimization Results (if available) -->
                     <div class="mt-4" x-show="scoreResults.optimization_success">
-                        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
                             <div class="flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -673,7 +710,33 @@
                                 </span>
                             </div>
 
-                            <p class="mt-2 text-xs text-indigo-600">
+                            <!-- Optimization Process Details -->
+                            <div class="mt-3 text-xs text-indigo-700">
+                                <div class="font-medium mb-1">Optimization Process:</div>
+                                <ul class="list-disc list-inside space-y-1 text-indigo-600 pl-1">
+                                    <li>Analyzed resume against job description</li>
+                                    <li>Identified key skills and requirements</li>
+                                    <li>Generated optimized content using AI</li>
+                                    <li>Calculated improvement score</li>
+                                </ul>
+                            </div>
+
+                            <!-- Missing Skills Addressed -->
+                            <div class="mt-3 text-xs" x-show="scoreResults.missing_skills && scoreResults.missing_skills.length > 0">
+                                <div class="font-medium text-indigo-700 mb-1">Missing Skills Addressed:</div>
+                                <div class="flex flex-wrap gap-1 mt-1">
+                                    <template x-for="skill in scoreResults.missing_skills.slice(0, 5)" :key="skill">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                            <span x-text="skill"></span>
+                                        </span>
+                                    </template>
+                                    <span x-show="scoreResults.missing_skills.length > 5" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        <span x-text="'+ ' + (scoreResults.missing_skills.length - 5) + ' more'"></span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <p class="mt-3 text-xs text-indigo-600 font-medium">
                                 Your resume has been optimized and is ready to view or download from the dashboard.
                             </p>
                         </div>
@@ -981,10 +1044,12 @@
                 this.resumeToDelete = null;
             },
 
-            // Score resume (show score modal)
+            // Score and optimize resume (show score modal)
             scoreResume(resumeId) {
                 this.resumeToScore = resumeId;
                 this.showScoreModal = true;
+                this.jobDescription = ''; // Clear previous job description
+                this.temperature = 0.0;   // Reset temperature to default
             },
 
             // Submit score resume
