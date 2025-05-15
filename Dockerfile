@@ -5,6 +5,9 @@ FROM python:3.13-slim AS builder
 # Set working directory
 WORKDIR /app
 
+# Add cache busting argument
+ARG CACHE_BUST=unknown
+
 # Install only the needed packages and clean cache to keep image size down
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-distutils \
@@ -18,6 +21,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Multi-stage build for a smaller final image
 FROM python:3.13-slim
+
+# Add cache busting argument to invalidate cache for this stage
+ARG CACHE_BUST=unknown
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -44,6 +50,9 @@ COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 # Copy version file to invalidate cache
 COPY ./version.txt /code/version.txt
+
+# Use the cache bust argument to create a timestamp file that will force rebuilding
+RUN echo "Cache bust: ${CACHE_BUST}" > /code/cache_timestamp.txt
 
 # Copy application code
 COPY ./app /code/app

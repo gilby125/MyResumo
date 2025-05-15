@@ -7,4 +7,5 @@ services:
       dockerfile: Dockerfile
       args:
         BUILDKIT_INLINE_CACHE: "0"
+        CACHE_BUST: "${CACHE_BUST:-$(date +%s)}"
       no_cache: true
