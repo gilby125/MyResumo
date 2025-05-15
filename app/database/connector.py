@@ -11,6 +11,8 @@ from contextlib import asynccontextmanager
 from typing import Dict, Optional
 
 import motor.motor_asyncio
+from bson.codec_options import CodecOptions
+from bson.binary import UuidRepresentation
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -42,6 +44,7 @@ class MongoConnectionManager:
         "waitQueueTimeoutMS": 10000,
         "serverSelectionTimeoutMS": 10000,
         "retryWrites": True,
+        "uuidRepresentation": "standard"  # Configure UUID representation at client level
     }
 
     def __new__(cls, connection_string=None):
@@ -112,7 +115,10 @@ class MongoConnectionManager:
         """
         client = await self.get_client()
         try:
-            collection = client[db_name][collection_name]
+            # Configure the database with UUID representation
+            codec_options = CodecOptions(uuid_representation=UuidRepresentation.STANDARD)
+            db = client.get_database(db_name, codec_options=codec_options)
+            collection = db[collection_name]
             yield collection
         finally:
             pass

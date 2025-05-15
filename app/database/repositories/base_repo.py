@@ -7,7 +7,9 @@ can inherit and extend.
 
 import os
 from typing import Dict, List, Optional
+from uuid import UUID
 
+from bson.binary import Binary, UuidRepresentation
 from app.database.connector import MongoConnectionManager
 
 
@@ -154,7 +156,8 @@ class BaseRepository:
     def _process_document_for_mongodb(self, document: Dict) -> Dict:
         """Process a document to make it compatible with MongoDB.
 
-        Converts UUIDs to strings and handles other special types.
+        Converts UUIDs to BSON Binary objects with standard representation
+        and handles other special types.
 
         Args:
             document (Dict): The document to process.
@@ -166,7 +169,12 @@ class BaseRepository:
 
         for key, value in document.items():
             # Handle UUIDs
-            if hasattr(value, 'hex') and callable(getattr(value, 'hex')):
+            if isinstance(value, UUID):
+                # Convert UUID to BSON Binary with standard representation
+                processed[key] = Binary.from_uuid(value, UuidRepresentation.STANDARD)
+            # Handle string UUIDs (already converted)
+            elif hasattr(value, 'hex') and callable(getattr(value, 'hex')):
+                # This is a fallback for other UUID-like objects
                 processed[key] = str(value)
             # Handle nested dictionaries
             elif isinstance(value, dict):
@@ -174,6 +182,12 @@ class BaseRepository:
             # Handle lists of dictionaries
             elif isinstance(value, list) and all(isinstance(item, dict) for item in value):
                 processed[key] = [self._process_document_for_mongodb(item) for item in value]
+            # Handle lists that might contain UUIDs
+            elif isinstance(value, list):
+                processed[key] = [
+                    Binary.from_uuid(item, UuidRepresentation.STANDARD) if isinstance(item, UUID) else item
+                    for item in value
+                ]
             # Handle other types
             else:
                 processed[key] = value
