@@ -5,9 +5,9 @@
 {% block content %}
 <div class="max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
     <h1 class="text-3xl font-bold text-gray-900 mb-8">Create an Optimized Resume</h1>
-    
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg p-6" 
-         x-data="resumeCreator()" 
+
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg p-6"
+         x-data="resumeCreator()"
          x-init="init()">
         <!-- Progress Stepper -->
         <div class="flex items-center justify-between mb-12">
@@ -19,7 +19,7 @@
             </div>
             <div class="step-connector" :class="{'active': currentStep >= 2}"></div>
             <div class="flex items-center">
-                <div class="rounded-full h-12 w-12 flex items-center justify-center" 
+                <div class="rounded-full h-12 w-12 flex items-center justify-center"
                      :class="{'bg-blue-500 text-white': currentStep >= 2, 'bg-gray-300 text-gray-600': currentStep < 2}">
                     2
                 </div>
@@ -27,7 +27,7 @@
             </div>
             <div class="step-connector" :class="{'active': currentStep >= 3}"></div>
             <div class="flex items-center">
-                <div class="rounded-full h-12 w-12 flex items-center justify-center" 
+                <div class="rounded-full h-12 w-12 flex items-center justify-center"
                      :class="{'bg-blue-500 text-white': currentStep >= 3, 'bg-gray-300 text-gray-600': currentStep < 3}">
                     3
                 </div>
@@ -35,30 +35,30 @@
             </div>
             <div class="step-connector" :class="{'active': currentStep >= 4}"></div>
             <div class="flex items-center">
-                <div class="rounded-full h-12 w-12 flex items-center justify-center" 
+                <div class="rounded-full h-12 w-12 flex items-center justify-center"
                      :class="{'bg-blue-500 text-white': currentStep >= 4, 'bg-gray-300 text-gray-600': currentStep < 4}">
                     4
                 </div>
                 <div class="text-sm font-medium ml-2" :class="{'text-gray-900': currentStep >= 4, 'text-gray-500': currentStep < 4}">Results</div>
             </div>
         </div>
-        
+
         <!-- Step 1: Upload Resume and Job Description -->
         <div x-show="currentStep === 1" class="fade-in">
             <!-- Upload Section Redesign -->
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-8 rounded-lg mb-8">
                 <h2 class="text-xl font-semibold text-gray-800 mb-6">Upload Your Resume</h2>
-                
+
                 <div class="flex flex-col md:flex-row gap-8">
                     <!-- Left: Resume Upload -->
                     <div class="flex-1">
-                        <div 
+                        <div
                             class="border-2 border-dashed border-gray-300 rounded-lg px-6 pt-10 pb-10 cursor-pointer bg-white transition-all duration-300 hover:border-blue-400 hover:bg-blue-50"
                             :class="{'border-blue-500 bg-blue-50': isDraggingResume, 'border-green-500 bg-green-50': resumeFile}"
                             @dragover.prevent="isDraggingResume = true"
                             @dragleave.prevent="isDraggingResume = false"
                             @drop.prevent="handleResumeDrop($event)">
-                            
+
                             <div class="space-y-3 text-center">
                                 <template x-if="!resumeFile">
                                     <div>
@@ -82,7 +82,7 @@
                                         </svg>
                                         <p class="mt-4 text-md font-medium text-gray-800" x-text="resumeFile.name"></p>
                                         <p class="mt-1 text-sm text-gray-500" x-text="'Size: ' + (resumeFile.size / 1024).toFixed(2) + ' KB'"></p>
-                                        <button type="button" @click.prevent="resumeFile = null; resumeContent = ''" 
+                                        <button type="button" @click.prevent="resumeFile = null; resumeContent = ''"
                                           class="mt-3 px-3 py-1 text-sm text-white bg-red-500 hover:bg-red-600 rounded-md shadow-sm transition-colors duration-200">
                                             Remove file
                                         </button>
@@ -92,7 +92,7 @@
                             <input id="resume-file" type="file" accept=".pdf" class="hidden" @change="handleResumeFileChange">
                         </div>
                     </div>
-                    
+
                     <!-- Right: Resume Preview -->
                     <div class="flex-1">
                         <div class="bg-white border border-gray-200 rounded-lg h-full p-4">
@@ -103,11 +103,11 @@
                                 </svg>
                                 Resume Preview
                             </h3>
-                            
+
                             <div class="h-48 overflow-y-auto bg-gray-50 border border-gray-200 rounded-md p-3" x-show="resumeContent !== ''">
                                 <p class="text-xs text-gray-700" x-text="resumeContent"></p>
                             </div>
-                            
+
                             <div class="h-48 flex items-center justify-center text-gray-400" x-show="resumeContent === ''">
                                 <p class="text-sm">Upload a resume to see preview</p>
                             </div>
@@ -115,32 +115,32 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Job Description Section -->
             <div class="bg-gradient-to-r from-green-50 to-teal-50 p-8 rounded-lg">
                 <h2 class="text-xl font-semibold text-gray-800 mb-6">Job Description</h2>
-                
+
                 <div class="bg-white border border-gray-200 rounded-lg p-6">
                     <div class="mb-6">
                         <label for="job-title" class="block text-md font-medium text-gray-700 mb-2">
                             Job Title
                         </label>
-                        <input 
-                            type="text" 
-                            id="job-title" 
+                        <input
+                            type="text"
+                            id="job-title"
                             class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
                             placeholder="e.g. Senior Software Developer"
                             x-model="jobTitle"
                         >
                     </div>
-                    
+
                     <div>
                         <label for="job-description" class="block text-md font-medium text-gray-700 mb-2">
                             Job Description
                             <span class="text-red-500">*</span>
                         </label>
-                        <textarea 
-                            id="job-description" 
+                        <textarea
+                            id="job-description"
                             rows="10"
                             class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
                             placeholder="Copy and paste the full job description here. The more detailed the description, the better the optimization results."
@@ -150,11 +150,36 @@
                             This will be used to tailor your resume specifically for this position.
                         </p>
                     </div>
+
+                    <div class="mt-4">
+                        <label for="temperature-slider" class="block text-md font-medium text-gray-700 mb-2">
+                            Creativity Level
+                            <span class="ml-2 text-sm text-gray-500">
+                                (Temperature: <span x-text="temperature.toFixed(1)"></span>)
+                            </span>
+                        </label>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-gray-500">Conservative</span>
+                            <input
+                                type="range"
+                                id="temperature-slider"
+                                min="0"
+                                max="1"
+                                step="0.1"
+                                x-model="temperature"
+                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                            >
+                            <span class="text-xs text-gray-500">Creative</span>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Lower values (0.0) produce more conservative, predictable results. Higher values (1.0) allow more creativity and variation.
+                        </p>
+                    </div>
                 </div>
             </div>
-            
+
             <div class="mt-8 flex justify-end">
-                <button 
+                <button
                     type="button"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center transition-colors duration-200"
                     :class="{'opacity-50 cursor-not-allowed': !canProceedToAnalysis(), 'transform hover:-translate-y-1': canProceedToAnalysis()}"
@@ -167,7 +192,7 @@
                 </button>
             </div>
         </div>
-        
+
         <!-- Step 2: Analysis In Progress - Redesigned -->
         <div x-show="currentStep === 2" class="fade-in">
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-lg">
@@ -188,7 +213,7 @@
                             Our AI is analyzing your resume against the job description to create a perfectly tailored version.
                         </p>
                     </div>
-                    
+
                     <!-- Analysis Progress -->
                     <div class="bg-white rounded-lg shadow-md p-6 mb-8">
                         <!-- Progress Bar -->
@@ -206,26 +231,26 @@
                                 </div>
                             </div>
                             <div class="overflow-hidden h-2 mb-4 text-xs flex rounded-full bg-blue-100">
-                                <div 
-                                    :style="`width: ${analysisProgress}%`" 
+                                <div
+                                    :style="`width: ${analysisProgress}%`"
                                     class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-out">
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Status Messages -->
                         <div class="mt-6 space-y-4">
                             <div class="flex items-center" :class="{'text-gray-400': analysisProgress < 25, 'text-blue-600': analysisProgress >= 25}">
-                                <div class="flex-shrink-0 h-8 w-8 rounded-full border-2 flex items-center justify-center" 
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full border-2 flex items-center justify-center"
                                      :class="{'border-gray-300': analysisProgress < 25, 'border-blue-500 bg-blue-50': analysisProgress >= 25}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" 
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                                          :class="{'text-gray-400': analysisProgress < 25, 'text-blue-600': analysisProgress >= 25}">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                                     </svg>
                                 </div>
                                 <span class="ml-4 text-sm font-medium">Processing resume text</span>
                             </div>
-                            
+
                             <div class="flex items-center" :class="{'text-gray-400': analysisProgress < 40, 'text-blue-600': analysisProgress >= 40}">
                                 <div class="flex-shrink-0 h-8 w-8 rounded-full border-2 flex items-center justify-center"
                                      :class="{'border-gray-300': analysisProgress < 40, 'border-blue-500 bg-blue-50': analysisProgress >= 40}">
@@ -236,7 +261,7 @@
                                 </div>
                                 <span class="ml-4 text-sm font-medium">Analyzing job requirements</span>
                             </div>
-                            
+
                             <div class="flex items-center" :class="{'text-gray-400': analysisProgress < 65, 'text-blue-600': analysisProgress >= 65}">
                                 <div class="flex-shrink-0 h-8 w-8 rounded-full border-2 flex items-center justify-center"
                                      :class="{'border-gray-300': analysisProgress < 65, 'border-blue-500 bg-blue-50': analysisProgress >= 65}">
@@ -247,7 +272,7 @@
                                 </div>
                                 <span class="ml-4 text-sm font-medium">Optimizing content</span>
                             </div>
-                            
+
                             <div class="flex items-center" :class="{'text-gray-400': analysisProgress < 85, 'text-blue-600': analysisProgress >= 85}">
                                 <div class="flex-shrink-0 h-8 w-8 rounded-full border-2 flex items-center justify-center"
                                      :class="{'border-gray-300': analysisProgress < 85, 'border-blue-500 bg-blue-50': analysisProgress >= 85}">
@@ -260,14 +285,14 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Current Activity -->
                     <div class="text-center">
                         <div class="inline-flex items-center px-4 py-2 bg-white border border-blue-100 rounded-full shadow-sm">
                             <div class="animate-pulse w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
                             <p class="text-sm text-gray-700" x-text="analysisProgressMessage">Initializing...</p>
                         </div>
-                        
+
                         <div class="mt-6 text-xs text-gray-500">
                             <p>This typically takes about 30-60 seconds</p>
                         </div>
@@ -275,7 +300,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Step 3: Initial Analysis Results -->
         <div x-show="currentStep === 3" class="fade-in">
             <div class="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-lg mb-6">
@@ -336,7 +361,7 @@
                             </p>
                         </div>
                     </div>
-                    
+
                     <!-- Matched Skills -->
                     <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
                         <div class="bg-gradient-to-r from-green-500 to-green-600 px-4 py-3">
@@ -353,7 +378,7 @@
                             </template>
                         </div>
                     </div>
-                    
+
                     <!-- Missing Skills -->
                     <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
                         <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-3">
@@ -397,7 +422,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Step 4: Final Optimized Results -->
         <div x-show="currentStep === 4" class="fade-in">
             <!-- Compact success indicator -->
@@ -450,14 +475,14 @@
                                     <span class="block text-xs text-gray-500">Original</span>
                                 </div>
                             </div>
-                            
+
                             <!-- Arrow -->
                             <div class="mx-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
                                 </svg>
                             </div>
-                            
+
                             <!-- Optimized Score Circle -->
                             <div class="relative inline-flex items-center justify-center ml-6">
                                 <svg class="w-24 h-24">
@@ -489,7 +514,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="mt-4 text-center" x-show="matchScore > originalScore">
                             <div class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -498,7 +523,7 @@
                                 <span x-text="`+${(matchScore - originalScore).toFixed(0)}% improvement`"></span>
                             </div>
                         </div>
-                        
+
                         <p class="mt-4 text-sm text-gray-700">
                             <template x-if="matchScore >= 80">
                                 <span>Excellent! Your optimized resume is highly compatible with this position.</span>
@@ -555,6 +580,7 @@
             resumeId: null,
             jobTitle: '',
             jobDescription: '',
+            temperature: 0.0,
             isDraggingResume: false,
             isUploading: false,
             isAnalyzing: false,
@@ -570,11 +596,11 @@
             resumePreviewType: 'pdf', // Can be 'pdf' or 'structured'
             resumePreviewUrl: '',
             previewData: null,
-            
+
             init() {
                 // Initialize the component
                 this.resetProgressInterval = null;
-                
+
                 // Listen for escape key to exit full screen PDF view if implemented
                 window.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape' && this.isFullScreenPreview) {
@@ -582,7 +608,7 @@
                     }
                 });
             },
-            
+
             // Handle resume file drag & drop and file input
             handleResumeDrop(event) {
                 this.isDraggingResume = false;
@@ -592,7 +618,7 @@
                     this.uploadResumeFile();
                 }
             },
-            
+
             handleResumeFileChange(event) {
                 const file = event.target.files[0];
                 if (file && file.type === 'application/pdf' && file.size <= 5 * 1024 * 1024) {
@@ -600,40 +626,40 @@
                     this.uploadResumeFile();
                 }
             },
-            
+
             // Upload the resume file to the backend
             async uploadResumeFile() {
                 if (!this.resumeFile) return;
-                
+
                 this.isUploading = true;
-                
+
                 // Create a FormData object to send the file
                 const formData = new FormData();
                 formData.append('file', this.resumeFile);
                 formData.append('title', this.resumeFile.name.replace('.pdf', ''));
                 formData.append('job_description', ''); // Will be updated later when we analyze
                 formData.append('user_id', 'temp-user-id'); // In a real app, you'd use the logged-in user's ID
-                
+
                 try {
                     const response = await fetch('/api/resume/', {
                         method: 'POST',
                         body: formData
                     });
-                    
+
                     if (!response.ok) {
                         throw new Error('Failed to upload resume');
                     }
-                    
+
                     const data = await response.json();
                     this.resumeId = data.id;
-                    
+
                     // Fetch the resume to get the extracted content
                     const resumeResponse = await fetch(`/api/resume/${this.resumeId}`);
                     if (resumeResponse.ok) {
                         const resumeData = await resumeResponse.json();
                         this.resumeContent = resumeData.original_content;
                     }
-                    
+
                 } catch (error) {
                     console.error('Error uploading resume:', error);
                     window.showErrorToast('Failed to upload resume. Please try again.');
@@ -641,23 +667,23 @@
                     this.isUploading = false;
                 }
             },
-            
+
             // Check if we can proceed to analysis
             canProceedToAnalysis() {
-                return (this.resumeFile && this.resumeContent && this.resumeId) && 
+                return (this.resumeFile && this.resumeContent && this.resumeId) &&
                      this.jobDescription.trim().length > 0 && !this.isUploading;
             },
-            
+
             // Start the analysis process
             async startAnalysis() {
                 if (!this.canProceedToAnalysis()) return;
-                
+
                 this.currentStep = 2;
                 this.isAnalyzing = true;
-                
+
                 // Start progress animation
                 this.startProgressSimulation();
-                
+
                 // Send the job description for optimization
                 try {
                     const response = await fetch(`/api/resume/${this.resumeId}/optimize`, {
@@ -667,41 +693,42 @@
                         },
                         body: JSON.stringify({
                             job_description: this.jobDescription,
-                            job_title: this.jobTitle || undefined
+                            job_title: this.jobTitle || undefined,
+                            temperature: parseFloat(this.temperature)
                         })
                     });
-                    
+
                     if (!response.ok) {
                         throw new Error('Failed to optimize resume');
                     }
-                    
+
                     const data = await response.json();
-                    
+
                     // Update match score with the optimized ATS score
                     this.matchScore = data.optimized_ats_score || 65;
-                    
+
                     // Use the matching_skills and missing_skills directly from the API response
                     this.matchedSkills = data.matching_skills || [];
                     this.missingSkills = data.missing_skills || [];
-                    
+
                     // Set up the PDF preview
                     this.setupResumePreview(data);
 
                     // Update original score and recommendation
                     this.originalScore = data.original_ats_score || 50;
                     this.recommendation = data.recommendation || '';
-                    
+
                     // Complete the progress simulation
                     clearInterval(this.resetProgressInterval);
                     this.analysisProgress = 100;
                     this.analysisProgressMessage = 'Analysis complete!';
-                    
+
                     // Move to results step after a short delay
                     setTimeout(() => {
                         this.currentStep = 3;
                         this.isAnalyzing = false;
                     }, 500);
-                    
+
                 } catch (error) {
                     console.error('Error optimizing resume:', error);
                     window.showErrorToast('Failed to upload resume. Please try again.');
@@ -710,22 +737,22 @@
                     clearInterval(this.resetProgressInterval);
                 }
             },
-            
+
             // Set up the resume preview based on available data
             setupResumePreview(data) {
                 this.resumePreviewLoaded = false;
-                
+
                 // Check if PDF is available
                 if (data.optimized_pdf_url) {
                     this.resumePreviewType = 'pdf';
                     this.resumePreviewUrl = data.optimized_pdf_url;
-                    
+
                     // In development environment, we might not have real PDF URLs,
                     // so we fallback to the structured view if needed
                     if (!this.resumePreviewUrl || this.resumePreviewUrl === '#') {
                         // For demo purposes, you could use a sample PDF if available
                         this.resumePreviewUrl = `/api/resume/${this.resumeId}/download?use_optimized=true`;
-                        
+
                         // Set a timeout to simulate PDF loading
                         setTimeout(() => {
                             this.resumePreviewLoaded = true;
@@ -738,7 +765,7 @@
                     // If no PDF but structured data is available
                     this.resumePreviewType = 'structured';
                     this.previewData = data.optimized_data;
-                    
+
                     // Set a timeout to simulate loading
                     setTimeout(() => {
                         this.resumePreviewLoaded = true;
@@ -753,23 +780,23 @@
                             profile_description: 'The resume preview could not be generated. Please use the download button to view your optimized resume.'
                         }
                     };
-                    
+
                     setTimeout(() => {
                         this.resumePreviewLoaded = true;
                     }, 1000);
                 }
             },
-            
+
             // Simulate progress animation during analysis
             startProgressSimulation() {
                 this.analysisProgress = 0;
                 this.analysisProgressMessage = 'Processing resume text...';
-                
+
                 this.resetProgressInterval = setInterval(() => {
                     if (this.analysisProgress < 95) {
                         this.analysisProgress += Math.floor(Math.random() * 15);
                         if (this.analysisProgress > 95) this.analysisProgress = 95;
-                        
+
                         // Update progress message based on progress
                         if (this.analysisProgress < 30) {
                             this.analysisProgressMessage = 'Extracting key information...';
@@ -783,11 +810,11 @@
                     }
                 }, 1000);
             },
-            
+
             // Download the optimized resume as PDF
             async downloadOptimizedResume() {
                 if (!this.resumeId) return;
-                
+
                 try {
                     // Open the download URL in a new tab
                     window.open(`/api/resume/${this.resumeId}/download?use_optimized=true`, '_blank');
@@ -796,7 +823,7 @@
                     window.showErrorToast('Failed to download resume. Please try again.');
                 }
             },
-            
+
             // Reset the form and start over
             resetAndStartOver() {
                 this.currentStep = 1;
@@ -804,6 +831,7 @@
                 this.resumeContent = '';
                 this.jobTitle = '';
                 this.jobDescription = '';
+                this.temperature = 0.0;
                 this.isDraggingResume = false;
                 this.isAnalyzing = false;
                 this.matchScore = 0;
@@ -813,7 +841,7 @@
                 this.resumePreviewUrl = '';
                 this.previewData = null;
             },
-            
+
             // Calculate circumference for SVG circle animation
             calculateCircumference(radius) {
                 return 2 * Math.PI * radius;
@@ -823,8 +851,8 @@
             optimizeResume() {
                 // Show loading state while transitioning to final results
                 this.isAnalyzing = true;
-                
-                // We already have all the data from the initial API call, 
+
+                // We already have all the data from the initial API call,
                 // so we can just transition to the results step
                 setTimeout(() => {
                     this.currentStep = 4;
