@@ -172,3 +172,84 @@ The changes were tested by:
 - Consider adding real-time progress updates from the backend instead of simulating progress
 - Add more detailed progress steps to better reflect the actual operations being performed
 - Implement progress indication for other long-running operations in the application
+
+## 2023-05-20: Enhanced End-to-End Testing with MCP Tools
+
+### Overview
+Expanded the end-to-end testing suite using Playwright and MCP tools to provide more comprehensive test coverage for the MyResumo application.
+
+### Changes Made
+1. **Project Structure Documentation**:
+   - Created `PROJECT_LAYOUT.md` to document the project structure and available MCP tools
+   - Documented the application's key components and workflows
+   - Added detailed information about the MongoDB and Docker container setup
+
+2. **New End-to-End Tests**:
+   - Created comprehensive tests for resume optimization workflow in `resume-optimization-e2e.spec.ts`
+   - Added tests for resume download functionality in various formats (PDF, LaTeX)
+   - Implemented tests for the prompts editor functionality in `prompts-editor-e2e.spec.ts`
+   - Added MongoDB integration tests in `mongodb-integration.spec.ts`
+   - Added Docker container health tests in `docker-container.spec.ts`
+
+3. **MCP Tool Integration**:
+   - Utilized Docker Proxy MCP tools to test container health and status
+   - Implemented MongoDB connection tests using MCP tools
+   - Added environment validation tests to ensure proper configuration
+   - Created mock implementations for testing without affecting production data
+
+4. **Test Utilities**:
+   - Created helper functions in `utils/test-helpers.ts` for common test operations
+   - Implemented test data generators for consistent test data
+   - Added cleanup routines to ensure tests don't interfere with each other
+   - Created a test data directory with sample files for testing
+
+5. **Test Runner Script**:
+   - Created `run-e2e-tests.sh` script to run all end-to-end tests
+   - Added environment checks to ensure the application is running before tests
+   - Implemented error handling and reporting
+
+### Benefits
+- More comprehensive test coverage for critical application workflows
+- Automated validation of application functionality
+- Early detection of regressions and issues
+- Documentation of expected application behavior through tests
+- Improved reliability of the application through systematic testing
+- Reusable test utilities for future test development
+- Consistent test data and environment setup
+
+### Testing
+The new tests were executed against the running application at http://192.168.7.10:32811 to verify functionality. The tests cover:
+
+1. **Resume Creation and Optimization**:
+   - Resume upload and analysis
+   - Resume optimization with job description
+   - Score improvement verification
+   - Resume download in multiple formats
+
+2. **Prompts Editor**:
+   - Viewing and selecting prompts
+   - Editing prompt templates
+   - Creating new prompts
+   - Validating prompt syntax
+   - Deleting prompts
+
+3. **MongoDB Integration**:
+   - Connection to MongoDB server
+   - Database and collection verification
+   - Schema validation
+   - Data operations
+
+4. **Docker Container Health**:
+   - Container status verification
+   - Resource usage monitoring
+   - Log analysis
+   - Port mapping verification
+
+### Next Steps
+- Continue expanding test coverage for edge cases
+- Implement performance testing using MCP tools
+- Add visual regression testing for UI components
+- Create CI/CD pipeline integration for automated testing
+- Add more comprehensive API testing
+- Implement load testing for high-traffic scenarios
+- Create a test data generation script for more realistic test data

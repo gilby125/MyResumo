@@ -4,6 +4,8 @@ import { test, expect } from '@playwright/test';
  * MyResumo Resume Download Tests
  *
  * These tests verify the functionality of the resume download options.
+ *
+ * NOTE: These tests use the /api/resume endpoint, not /api/resumes.
  */
 
 test.describe('Resume Download Options Tests', () => {
@@ -101,17 +103,17 @@ test.describe('Resume Download Options Tests', () => {
     // Fill in job description and optimize
     await page.getByLabel('Job Description').fill('Test job description requiring Python and JavaScript skills');
     await page.getByRole('button', { name: 'Optimize Resume' }).click();
-    
+
     // Wait for optimization to complete
     await page.waitForSelector('text=Optimization Complete!', { timeout: 10000 });
-    
+
     // Verify download dropdown button is visible
     const downloadButton = page.getByRole('button', { name: 'Download Optimized Resume' });
     await expect(downloadButton).toBeVisible();
-    
+
     // Click the download button to show options
     await downloadButton.click();
-    
+
     // Verify dropdown options are visible
     await expect(page.getByRole('menuitem', { name: 'PDF Format' })).toBeVisible();
     await expect(page.getByRole('menuitem', { name: 'LaTeX Format (Editable)' })).toBeVisible();
@@ -120,23 +122,23 @@ test.describe('Resume Download Options Tests', () => {
   test('should download PDF when PDF option is selected', async ({ page, context }) => {
     // Setup download listener
     const downloadPromise = page.waitForEvent('download');
-    
+
     // Fill in job description and optimize
     await page.getByLabel('Job Description').fill('Test job description requiring Python and JavaScript skills');
     await page.getByRole('button', { name: 'Optimize Resume' }).click();
-    
+
     // Wait for optimization to complete
     await page.waitForSelector('text=Optimization Complete!', { timeout: 10000 });
-    
+
     // Click the download button to show options
     await page.getByRole('button', { name: 'Download Optimized Resume' }).click();
-    
+
     // Click the PDF option
     await page.getByRole('menuitem', { name: 'PDF Format' }).click();
-    
+
     // Wait for download to start
     const download = await downloadPromise;
-    
+
     // Verify download has started
     expect(download.suggestedFilename()).toContain('.pdf');
   });
@@ -144,23 +146,23 @@ test.describe('Resume Download Options Tests', () => {
   test('should download LaTeX when LaTeX option is selected', async ({ page, context }) => {
     // Setup download listener
     const downloadPromise = page.waitForEvent('download');
-    
+
     // Fill in job description and optimize
     await page.getByLabel('Job Description').fill('Test job description requiring Python and JavaScript skills');
     await page.getByRole('button', { name: 'Optimize Resume' }).click();
-    
+
     // Wait for optimization to complete
     await page.waitForSelector('text=Optimization Complete!', { timeout: 10000 });
-    
+
     // Click the download button to show options
     await page.getByRole('button', { name: 'Download Optimized Resume' }).click();
-    
+
     // Click the LaTeX option
     await page.getByRole('menuitem', { name: 'LaTeX Format (Editable)' }).click();
-    
+
     // Wait for download to start
     const download = await downloadPromise;
-    
+
     // Verify download has started
     expect(download.suggestedFilename()).toContain('.tex');
   });

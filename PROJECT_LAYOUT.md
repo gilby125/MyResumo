@@ -1,78 +1,83 @@
 # MyResumo Project Layout
 
-## Directory Structure
+## Project Structure
 
 ```
-MyResumo/
-├── app/                        # Main application directory
-│   ├── api/                    # API endpoints and routers
-│   │   └── routers/            # FastAPI router modules
-│   │       ├── prompts.py      # Prompts management API
-│   │       ├── resume.py       # Resume management API
-│   │       └── token_usage.py  # Token usage tracking API
-│   ├── database/               # Database related code
-│   │   ├── connector.py        # MongoDB connection management
-│   │   ├── models/             # Pydantic models for database entities
-│   │   │   ├── prompt.py       # Prompt template models
-│   │   │   └── resume.py       # Resume data models
-│   │   └── repositories/       # Repository pattern implementations
-│   │       ├── base_repo.py    # Base repository with common operations
-│   │       ├── prompt_repository.py  # Prompt-specific repository
-│   │       └── resume_repository.py  # Resume-specific repository
-│   ├── main.py                 # Application entry point
-│   ├── services/               # Business logic services
-│   │   ├── ai/                 # AI-related services
-│   │   │   ├── ats_scoring.py  # ATS scoring logic
-│   │   │   └── model_ai.py     # Resume optimization AI
-│   │   └── resume/             # Resume processing services
-│   │       └── latex_generator.py  # LaTeX PDF generation
-│   ├── static/                 # Static assets (CSS, JS, images)
-│   ├── templates/              # Jinja2 HTML templates
-│   ├── utils/                  # Utility functions
-│   │   └── file_handling.py    # File operations utilities
-│   └── web/                    # Web UI routes
-│       ├── core.py             # Core web routes
-│       └── dashboard.py        # Dashboard web routes
-├── .env                        # Environment variables (not in version control)
-├── .env.example                # Example environment variables template
-└── PROJECT_LAYOUT.md           # This file - project structure documentation
+/home/gilby/Code/MyResumo/
+├── .env                      # Environment variables
+├── .env.example              # Example environment variables
+├── .env.local                # Local environment variables (not committed to git)
+├── package.json              # Node.js package configuration
+├── package-lock.json         # Node.js package lock file
+├── playwright.config.ts      # Playwright test configuration
+├── pyproject.toml            # Python project configuration
+├── pytest.ini                # Pytest configuration
+├── requirements.txt          # Python dependencies
+├── e2e/                      # End-to-end tests using Playwright
+│   ├── advanced-mcp.spec.ts  # Advanced MCP functionality tests
+│   ├── create-resume.spec.ts # Resume creation tests
+│   ├── dashboard.spec.ts     # Dashboard page tests
+│   ├── example.spec.ts       # Example test
+│   ├── home.spec.ts          # Home page tests
+│   ├── mcp-test.spec.ts      # Basic MCP functionality tests
+│   ├── prompts-editor.spec.ts # Prompts editor tests
+│   └── resume_download.spec.ts # Resume download tests
+├── playwright-report/        # Playwright test reports
+├── portainer-mcp/            # Portainer MCP tools
+│   ├── internal/
+│   │   ├── mcp/              # MCP implementation
+│   │   └── tooldef/          # Tool definitions
+│   │       └── tools.yaml    # MCP tools configuration
+│   ├── pkg/
+│   │   ├── portainer/        # Portainer client
+│   │   └── toolgen/          # Tool generation
+│   └── tests/
+│       └── integration/      # MCP integration tests
+├── scripts/                  # Utility scripts
+│   ├── lint.sh               # Linting script
+│   ├── post_install_check.py # Post-installation check
+│   ├── setup_dev.sh          # Development setup script
+│   └── start.sh              # Application startup script
+├── services/                 # Application services
+│   └── resume/               # Resume service
+│       └── latex_templates/  # LaTeX templates for resume generation
+└── tests/                    # Python tests
+    ├── test_latex_generator.py # LaTeX generator tests
+    ├── test_prompts_api.py     # Prompts API tests
+    ├── test_resume_download.py # Resume download tests
+    └── test_resume_router.py   # Resume router tests
 ```
 
 ## Key Components
 
-### API Layer
-- **api/routers/**: Contains FastAPI router modules that define API endpoints
-  - **resume.py**: Handles resume creation, optimization, and retrieval
-  - **prompts.py**: Manages AI prompt templates
-  - **token_usage.py**: Tracks AI token usage
+1. **End-to-End Tests**: Located in the `e2e/` directory, these tests use Playwright to test the application from a user's perspective.
 
-### Database Layer
-- **database/connector.py**: Manages MongoDB connections using the singleton pattern
-- **database/models/**: Pydantic models for data validation
-- **database/repositories/**: Repository pattern implementations for database operations
+2. **Portainer MCP**: Located in the `portainer-mcp/` directory, this provides Model Control Protocol tools for interacting with Portainer.
 
-### Service Layer
-- **services/ai/**: AI-related services for resume optimization and scoring
-- **services/resume/**: Resume processing services including PDF generation
+3. **Services**: Located in the `services/` directory, these contain the core application functionality.
 
-### Web UI
-- **web/**: Web UI routes for the frontend application
-- **templates/**: Jinja2 HTML templates for rendering web pages
-- **static/**: Static assets like CSS, JavaScript, and images
+4. **Tests**: Located in the `tests/` directory, these contain Python unit tests for the application.
 
-### Configuration
-- **.env**: Environment variables for configuration (not in version control)
-- **.env.example**: Template for required environment variables
+## MCP Tools Available
 
-## Environment Variables
+The MCP tools available include:
 
-The application uses the following environment variables:
+1. **Access Group Management**: Tools for managing access groups (listAccessGroups, createAccessGroup, etc.)
+2. **Environment Management**: Tools for managing environments (listEnvironments, updateEnvironmentTags, etc.)
+3. **Environment Group Management**: Tools for managing environment groups
+4. **Settings Management**: Tools for managing Portainer settings
+5. **Stack Management**: Tools for managing stacks (listStacks, getStackFile, createStack, etc.)
+6. **Tag Management**: Tools for managing environment tags
+7. **Team Management**: Tools for managing teams (createTeam, listTeams, etc.)
+8. **User Management**: Tools for managing users (listUsers, updateUserRole)
+9. **Docker Proxy**: Tool for proxying Docker API requests
+10. **Kubernetes Proxy**: Tool for proxying Kubernetes API requests
 
-- **API_KEY**: API key for the AI service
-- **API_BASE**: Base URL for the AI service API
-- **MODEL_NAME**: Name of the AI model to use
-- **MONGODB_URL**: MongoDB connection string
-- **DB_NAME**: MongoDB database name (defaults to "myresumo")
+## Application Information
+
+- The application is running remotely through Portainer at 192.168.7.10
+- The web port increments each time the app is started (currently at port 32811)
+- MongoDB server is located at 192.168.7.10:27017
 
 ## Main Workflows
 
@@ -80,3 +85,4 @@ The application uses the following environment variables:
 2. **Resume Optimization**: AI analyzes the resume against a job description and generates an optimized version
 3. **ATS Scoring**: AI scores the resume against a job description for ATS compatibility
 4. **PDF Generation**: Optimized resume is converted to a professional PDF using LaTeX templates
+5. **Resume Download**: User can download the optimized resume in various formats (PDF, LaTeX)
