@@ -677,13 +677,20 @@ async def optimize_resume(
         # 11. Update database
         logger.info(f"Updating resume {resume_id} with optimized data")
         try:
+            # Extract optimization summary if available
+            optimization_summary = None
+            if isinstance(result, dict) and "optimization_summary" in result:
+                optimization_summary = result["optimization_summary"]
+                logger.info("Found optimization summary in result")
+
             await repo.update_optimized_data(
                 resume_id, optimized_data, optimized_ats_score,
                 original_ats_score=original_ats_score,
                 matching_skills=optimized_score_result.get("matching_skills", []),
                 missing_skills=optimized_score_result.get("missing_skills", []),
                 score_improvement=score_improvement,
-                recommendation=optimized_score_result.get("recommendation", "")
+                recommendation=optimized_score_result.get("recommendation", ""),
+                optimization_summary=optimization_summary
             )
             logger.info("Successfully updated resume with optimized data")
         except Exception as db_error:
@@ -927,7 +934,8 @@ async def score_resume(
                         matching_skills=score_result.get("matching_skills", []),
                         missing_skills=score_result.get("missing_skills", []),
                         score_improvement=score_improvement,
-                        recommendation=score_result.get("recommendation", "")
+                        recommendation=score_result.get("recommendation", ""),
+                        optimization_summary=optimization_summary
                     )
                     optimization_success = True
                 except Exception as validation_error:
