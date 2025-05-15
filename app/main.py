@@ -6,7 +6,15 @@ coordination point for the entire application.
 """
 
 import os
+import pathlib
 from datetime import datetime
+
+# Load environment variables from .env.local if it exists (for local development)
+env_local_path = pathlib.Path(__file__).parent.parent / '.env.local'
+if env_local_path.exists():
+    print(f"Loading environment variables from {env_local_path}")
+    from dotenv import load_dotenv
+    load_dotenv(env_local_path)
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError

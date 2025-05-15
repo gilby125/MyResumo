@@ -78,6 +78,17 @@ class ResumeSummary(BaseModel):
     updated_at: datetime = Field(..., description="When the resume was last updated")
 
 
+class OptimizationSummary(BaseModel):
+    """Schema for optimization summary."""
+
+    changes_made: List[str] = Field([], description="List of changes made to the resume")
+    keywords_added: List[str] = Field([], description="Keywords added from the job description")
+    skills_emphasized: List[str] = Field([], description="Skills that were emphasized in the resume")
+    content_reorganized: List[str] = Field([], description="How content was reorganized")
+    achievements_quantified: List[str] = Field([], description="Achievements that were quantified")
+    overall_strategy: str = Field("", description="Overall optimization strategy")
+
+
 class OptimizationResponse(BaseModel):
     """Schema for resume optimization response."""
 
@@ -94,6 +105,7 @@ class OptimizationResponse(BaseModel):
     )
     missing_skills: List[str] = Field([], description="Skills missing from the resume")
     recommendation: str = Field("", description="AI recommendation for improvement")
+    optimization_summary: Optional[OptimizationSummary] = Field(None, description="Summary of optimization changes")
     optimized_data: Dict[str, Any] = Field(..., description="Optimized resume data")
 
 
@@ -146,6 +158,9 @@ class ResumeScoreResponse(BaseModel):
     )
     score_improvement: int = Field(
         0, description="Score improvement after optimization"
+    )
+    optimization_summary: Optional[OptimizationSummary] = Field(
+        None, description="Summary of optimization changes"
     )
 
 
@@ -683,6 +698,12 @@ async def optimize_resume(
         logger.info(
             f"Resume optimization completed successfully for resume_id: {resume_id}"
         )
+
+        # Extract optimization summary if available
+        optimization_summary = None
+        if isinstance(result, dict) and "optimization_summary" in result:
+            optimization_summary = result["optimization_summary"]
+
         return {
             "resume_id": resume_id,
             "original_ats_score": original_ats_score,
@@ -691,6 +712,7 @@ async def optimize_resume(
             "matching_skills": optimized_score_result.get("matching_skills", []),
             "missing_skills": optimized_score_result.get("missing_skills", []),
             "recommendation": optimized_score_result.get("recommendation", ""),
+            "optimization_summary": optimization_summary,
             "optimized_data": result,
         }
 
@@ -892,6 +914,11 @@ async def score_resume(
                     score_improvement = optimized_score - ats_score
                     logger.info(f"Score improvement: {score_improvement}")
 
+                    # Extract optimization summary if available
+                    optimization_summary = None
+                    if isinstance(optimization_result, dict) and "optimization_summary" in optimization_result:
+                        optimization_summary = optimization_result["optimization_summary"]
+
                     # Update database with optimized data
                     logger.info(f"Updating resume {resume_id} with optimized data")
                     await repo.update_optimized_data(
@@ -926,6 +953,11 @@ async def score_resume(
             }
         )
 
+        # Prepare optimization summary for response
+        response_optimization_summary = None
+        if optimization_success and optimization_summary:
+            response_optimization_summary = optimization_summary
+
         return {
             "resume_id": resume_id,
             "ats_score": ats_score,
@@ -936,7 +968,8 @@ async def score_resume(
             "job_requirements": score_result.get("job_requirements", []),
             "optimization_success": optimization_success,
             "optimized_score": optimized_score,
-            "score_improvement": score_improvement if optimization_success else 0
+            "score_improvement": score_improvement if optimization_success else 0,
+            "optimization_summary": response_optimization_summary
         }
 
     except Exception as e:

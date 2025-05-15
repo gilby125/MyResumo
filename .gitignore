@@ -168,6 +168,7 @@ node_modules
 *.aux
 *.out
 .env
+.env.local
 
 myresumo-prd.md
 .ruff_cache/

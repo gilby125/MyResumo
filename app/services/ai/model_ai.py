@@ -245,6 +245,16 @@ class AtsResumeOptimizer:
             - Optimize language and presentation while maintaining accuracy
             - When appropriate, add context to existing skills to make them more relevant to the job
 
+        6. **CREATE A SUMMARY OF CHANGES**
+            - Document the specific changes made to the resume
+            - List the key keywords and phrases added from the job description
+            - Explain how the professional summary was tailored
+            - Describe how experience descriptions were enhanced or reframed
+            - Note any skills that were emphasized or added
+            - Explain any reorganization of content for better ATS compatibility
+            - Highlight quantification of achievements that were added
+            - Summarize the overall optimization strategy
+
         ## OUTPUT FORMAT:
 
         ⚠️ CRITICAL INSTRUCTION ⚠️
@@ -320,7 +330,15 @@ class AtsResumeOptimizer:
                     "start_date": "",
                     "end_date": ""
                 }}}}
-            ]
+            ],
+            "optimization_summary": {{{{
+                "changes_made": [],
+                "keywords_added": [],
+                "skills_emphasized": [],
+                "content_reorganized": [],
+                "achievements_quantified": [],
+                "overall_strategy": ""
+            }}}}
         }}}}
 
         IMPORTANT REQUIREMENTS:
@@ -328,8 +346,8 @@ class AtsResumeOptimizer:
         2. The "two_goals_of_the_project" array must contain EXACTLY 2 items for each project
         3. Make sure all dates follow a consistent format (YYYY-MM or MM/YYYY)
         4. Ensure all fields are filled with appropriate data extracted from the resume
-        5. Return ONLY the JSON object with no other text, explanation, or commentary
-        6. DO NOT include any text like "Here's the optimized resume" or "Here's the JSON"
+        5. The "optimization_summary" section must include detailed information about the specific changes made
+        6. Return ONLY the JSON object with no other text, explanation, or commentary
         7. Your response MUST be a valid JSON object that can be parsed with json.loads()
         8. DO NOT wrap the JSON in markdown code blocks or any other formatting
 
@@ -492,6 +510,17 @@ class AtsResumeOptimizer:
                             "recommendation": score_results.get("recommendation", "")
                         }
 
+                    # Ensure optimization_summary exists
+                    if "optimization_summary" not in json_result:
+                        json_result["optimization_summary"] = {
+                            "changes_made": [],
+                            "keywords_added": [],
+                            "skills_emphasized": [],
+                            "content_reorganized": [],
+                            "achievements_quantified": [],
+                            "overall_strategy": "Resume optimized for ATS compatibility."
+                        }
+
                     return json_result
                 except json.JSONDecodeError:
                     print(f"JSON decode error. Trying fallback methods. Content starts with: {content[:100]}...")
@@ -512,6 +541,17 @@ class AtsResumeOptimizer:
                                     "recommendation": score_results.get("recommendation", "")
                                 }
 
+                            # Ensure optimization_summary exists
+                            if "optimization_summary" not in json_result:
+                                json_result["optimization_summary"] = {
+                                    "changes_made": [],
+                                    "keywords_added": [],
+                                    "skills_emphasized": [],
+                                    "content_reorganized": [],
+                                    "achievements_quantified": [],
+                                    "overall_strategy": "Resume optimized for ATS compatibility."
+                                }
+
                             return json_result
                         except json.JSONDecodeError:
                             print(f"Failed to parse JSON from code block. Trying next method.")
@@ -529,6 +569,17 @@ class AtsResumeOptimizer:
                                     "matching_skills": score_results.get("matching_skills", []),
                                     "missing_skills": score_results.get("missing_skills", []),
                                     "recommendation": score_results.get("recommendation", "")
+                                }
+
+                            # Ensure optimization_summary exists
+                            if "optimization_summary" not in json_result:
+                                json_result["optimization_summary"] = {
+                                    "changes_made": [],
+                                    "keywords_added": [],
+                                    "skills_emphasized": [],
+                                    "content_reorganized": [],
+                                    "achievements_quantified": [],
+                                    "overall_strategy": "Resume optimized for ATS compatibility."
                                 }
 
                             return json_result
@@ -564,6 +615,17 @@ class AtsResumeOptimizer:
                                             "recommendation": score_results.get("recommendation", "")
                                         }
 
+                                    # Ensure optimization_summary exists
+                                    if "optimization_summary" not in json_result:
+                                        json_result["optimization_summary"] = {
+                                            "changes_made": [],
+                                            "keywords_added": [],
+                                            "skills_emphasized": [],
+                                            "content_reorganized": [],
+                                            "achievements_quantified": [],
+                                            "overall_strategy": "Resume optimized for ATS compatibility."
+                                        }
+
                                     print("Successfully extracted JSON from conversational response.")
                                     return json_result
                             except json.JSONDecodeError:
@@ -593,6 +655,14 @@ class AtsResumeOptimizer:
                         "projects": [],
                         "certificate": [],
                         "extra_curricular_activities": [],
+                        "optimization_summary": {
+                            "changes_made": ["Resume content was restructured for better ATS compatibility"],
+                            "keywords_added": [],
+                            "skills_emphasized": [],
+                            "content_reorganized": ["Content was reorganized to highlight relevant experience"],
+                            "achievements_quantified": [],
+                            "overall_strategy": "Resume was optimized to improve ATS compatibility and highlight relevant skills and experience."
+                        },
                         "raw_text_response": content  # Store the full text response
                     }
 
