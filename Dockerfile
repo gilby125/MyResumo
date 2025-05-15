@@ -54,6 +54,9 @@ COPY ./version.txt /code/version.txt
 # Use the cache bust argument to create a timestamp file that will force rebuilding
 RUN echo "Cache bust: ${CACHE_BUST}" > /code/cache_timestamp.txt
 
+# Create a version.env file with the version from version.txt
+RUN echo "APP_VERSION=$(cat /code/version.txt)" > /code/version.env
+
 # Copy application code
 COPY ./app /code/app
 

@@ -18,10 +18,20 @@ if ! [ "$PORT" -eq "$PORT" ] 2>/dev/null; then
     PORT=8080
 fi
 
+# Load version from version.env if it exists
+if [ -f /code/version.env ]; then
+    echo "Loading version from version.env"
+    . /code/version.env
+    echo "APP_VERSION: $APP_VERSION"
+    # Export the version so it's available to the Python application
+    export APP_VERSION
+fi
+
 echo "===== Starting MyResumo Application (Runtime Diagnostics) ====="
 echo "Current Working Directory: $(pwd)"
 echo "PYTHONPATH: $PYTHONPATH"
 echo "Using PORT: $PORT"
+echo "Application Version: ${APP_VERSION:-unknown}"
 echo "sys.path (via python -c 'import sys; print(sys.path)'):"
 python -c 'import sys; print(sys.path)'
 
