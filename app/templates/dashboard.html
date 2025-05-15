@@ -265,13 +265,22 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                             </svg>
                                         </button>
-                                        <button @click="viewResume(resume.id)" class="text-primary-600 hover:text-primary-900 focus:outline-none focus:underline" title="View Resume">
+                                        <button @click="viewResume(resume.id)" class="text-primary-600 hover:text-primary-900 focus:outline-none focus:underline" title="View Original Resume">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
                                         </button>
-                                        <button @click="downloadResume(resume.id)" class="text-green-600 hover:text-green-900 focus:outline-none focus:underline" title="Download Resume">
+                                        <button
+                                            x-show="resume.optimized_data"
+                                            @click="viewOptimizedResume(resume.id)"
+                                            class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:underline"
+                                            title="View Optimized Resume">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                        </button>
+                                        <button @click="downloadResume(resume.id)" class="text-green-600 hover:text-green-900 focus:outline-none focus:underline" title="Download Optimized Resume">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                             </svg>
@@ -383,14 +392,24 @@
                                         </svg>
                                         <span class="sr-only">Score</span>
                                     </button>
-                                    <button @click="viewResume(resume.id)" class="flex-1 inline-flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 border border-transparent text-xs font-medium rounded text-primary-700 bg-primary-50 hover:bg-primary-100 focus:outline-none focus:ring-1 focus:ring-primary-500" title="View Resume">
+                                    <button @click="viewResume(resume.id)" class="flex-1 inline-flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 border border-transparent text-xs font-medium rounded text-primary-700 bg-primary-50 hover:bg-primary-100 focus:outline-none focus:ring-1 focus:ring-primary-500" title="View Original Resume">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-3.5 sm:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                         </svg>
-                                        <span class="sr-only">View</span>
+                                        <span class="sr-only">View Original</span>
                                     </button>
-                                    <button @click="downloadResume(resume.id)" class="flex-1 inline-flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 border border-transparent text-xs font-medium rounded text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-1 focus:ring-green-500" title="Download Resume">
+                                    <button
+                                        x-show="resume.optimized_data"
+                                        @click="viewOptimizedResume(resume.id)"
+                                        class="flex-1 inline-flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 border border-transparent text-xs font-medium rounded text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                        title="View Optimized Resume">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-3.5 sm:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                        <span class="sr-only">View Optimized</span>
+                                    </button>
+                                    <button @click="downloadResume(resume.id)" class="flex-1 inline-flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 border border-transparent text-xs font-medium rounded text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-1 focus:ring-green-500" title="Download Optimized Resume">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-3.5 sm:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                         </svg>
@@ -847,11 +866,18 @@
                 // Example implementation could use a toast library or custom Alpine component
             },
 
-            // View resume details
+            // View original resume details
             viewResume(resumeId) {
                 // Set flag to prevent unintended actions during navigation
                 this.pageLeaving = true;
                 window.location.href = `/resume/${resumeId}`;
+            },
+
+            // View optimized resume details
+            viewOptimizedResume(resumeId) {
+                // Set flag to prevent unintended actions during navigation
+                this.pageLeaving = true;
+                window.location.href = `/resume/${resumeId}?view=optimized`;
             },
 
             // Download resume PDF
@@ -869,7 +895,7 @@
                 document.body.removeChild(downloadLink);
 
                 // Show a notification
-                this.showNotification('Resume download started', 'success');
+                this.showNotification('Optimized resume download started', 'success');
             },
 
             // Delete resume (show confirmation modal)

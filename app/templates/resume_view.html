@@ -6,22 +6,42 @@
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8" x-data="resumeView('{{ resume_id }}')">
     <div class="md:flex md:items-center md:justify-between mb-8">
         <div class="flex-1 min-w-0">
-            <h1 class="text-3xl font-bold text-gray-900" x-text="resume.title || 'Resume Details'"></h1>
+            <div class="flex items-center">
+                <h1 class="text-3xl font-bold text-gray-900" x-text="resume.title || 'Resume Details'"></h1>
+                <span
+                    x-show="viewOptimized && resume.optimized_data"
+                    class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    Optimized Version
+                </span>
+            </div>
             <p class="text-gray-500 mt-2">Last updated <span x-text="formatDate(resume.updated_at)"></span></p>
         </div>
-        <div class="mt-4 md:mt-0 flex space-x-3">
-            <button @click="downloadResume()" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-                Download PDF
-            </button>
-            <a href="/dashboard" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-                </svg>
-                Back to Dashboard
-            </a>
+        <div class="mt-4 md:mt-0 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <!-- Toggle between original and optimized view -->
+            <div x-show="resume.optimized_data" class="flex justify-center">
+                <button
+                    @click="toggleView()"
+                    class="inline-flex items-center px-4 py-2 border border-indigo-300 shadow-sm text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    <span x-text="viewOptimized ? 'View Original' : 'View Optimized'"></span>
+                </button>
+            </div>
+            <div class="flex space-x-3">
+                <button @click="downloadResume()" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Download PDF
+                </button>
+                <a href="/dashboard" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Back to Dashboard
+                </a>
+            </div>
         </div>
     </div>
 
@@ -185,7 +205,7 @@
         </div>
 
         <!-- Resume Details -->
-        <div x-show="resume.optimized_data" class="px-0">
+        <div x-show="viewOptimized && resume.optimized_data" class="px-0">
             <!-- Basic Information -->
             <div class="px-4 py-5 sm:px-6">
                 <h3 class="text-lg font-medium leading-6 text-gray-900">Personal Information</h3>
@@ -368,7 +388,7 @@
             </div>
 
             <!-- Not optimized yet message -->
-            <template x-if="!resume.optimized_data">
+            <template x-if="viewOptimized && !resume.optimized_data">
                 <div class="border-t border-gray-200 px-4 py-8 sm:px-6 text-center">
                     <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
                         <svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -381,6 +401,16 @@
                         <a href="/dashboard" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                             Back to Dashboard
                         </a>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Original Resume Content -->
+            <template x-if="!viewOptimized && resume.original_content">
+                <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Original Resume Content</h3>
+                    <div class="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <pre class="whitespace-pre-wrap text-sm text-gray-700 font-mono" x-text="resume.original_content"></pre>
                     </div>
                 </div>
             </template>
@@ -398,6 +428,7 @@
             isLoading: true,
             hasError: false,
             errorMessage: '',
+            viewOptimized: false,
 
             // Initialize
             async init() {
@@ -414,6 +445,10 @@
                     }, 3000);
                     return;
                 }
+
+                // Check if we should view the optimized version
+                const urlParams = new URLSearchParams(window.location.search);
+                this.viewOptimized = urlParams.get('view') === 'optimized';
 
                 await this.loadResume();
             },
@@ -474,6 +509,20 @@
                 } finally {
                     this.isLoading = false;
                 }
+            },
+
+            // Toggle between original and optimized view
+            toggleView() {
+                this.viewOptimized = !this.viewOptimized;
+
+                // Update URL without reloading the page
+                const url = new URL(window.location.href);
+                if (this.viewOptimized) {
+                    url.searchParams.set('view', 'optimized');
+                } else {
+                    url.searchParams.delete('view');
+                }
+                window.history.pushState({}, '', url);
             },
 
             // Download resume as PDF
