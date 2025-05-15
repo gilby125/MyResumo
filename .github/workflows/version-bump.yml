@@ -1,0 +1,74 @@
+name: Version Bump
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '.github/**'
+      - 'pyproject.toml'  # Ignore version changes to prevent loops
+      - 'app/version.py'  # Ignore version changes to prevent loops
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'chore(release):')"
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install python-semantic-release
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Semantic Release
+        run: |
+          semantic-release version
+          semantic-release publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get new version
+        id: get_version
+        run: |
+          VERSION=$(grep -m 1 "__version__" app/version.py | cut -d '"' -f 2)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "New version: $VERSION"
+
+      - name: Update version in main.py
+        run: |
+          sed -i "s/__version__ = \".*\"/__version__ = \"$VERSION\"/" app/version.py
+          sed -i "s/VERSION_MAJOR = .*$/VERSION_MAJOR = ${VERSION%%.*}/" app/version.py
+          sed -i "s/VERSION_MINOR = .*$/VERSION_MINOR = ${VERSION#*.}" app/version.py
+          sed -i "s/VERSION_PATCH = .*$/VERSION_PATCH = ${VERSION##*.}/" app/version.py
+          sed -i "s/version=\".*\"/version=\"$VERSION\"/" app/main.py
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
+
+      - name: Update version in __init__.py
+        run: |
+          sed -i "s/__version__ = \".*\"/__version__ = \"$VERSION\"/" app/__init__.py
+
+      - name: Commit version changes
+        run: |
+          git add app/version.py app/main.py app/__init__.py package.json
+          git commit -m "chore(release): update version files to $VERSION [skip ci]"
+          git push

@@ -9,6 +9,9 @@ import os
 import pathlib
 from datetime import datetime
 
+# Import version information
+from app.version import __version__, get_version_info
+
 # Load environment variables from .env.local if it exists (for local development)
 env_local_path = pathlib.Path(__file__).parent.parent / '.env.local'
 if env_local_path.exists():
@@ -112,7 +115,7 @@ app = FastAPI(
     MyResumo is an AI-backed resume generator designed to tailor your resume and skills based on a given job description. This innovative tool leverages the latest advancements in AI technology to provide you with a customized resume that stands out.
     """,
     license_info={"name": "MIT License", "url": "https://opensource.org/licenses/MIT"},
-    version="2.0.0",
+    version=__version__,
     docs_url=None,
     # Ensure all routes are included in the OpenAPI schema
     openapi_url="/openapi.json",
@@ -299,7 +302,12 @@ async def health_check():
         JSONResponse: Status information about the application.
     """
     return JSONResponse(
-        content={"status": "healthy", "version": app.version, "service": "myresumo"}
+        content={
+            "status": "healthy",
+            "version": __version__,
+            "service": "myresumo",
+            "version_info": get_version_info()
+        }
     )
 
 
