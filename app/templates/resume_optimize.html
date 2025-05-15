@@ -424,15 +424,55 @@
                         <h4 class="font-medium text-gray-700">Actions</h4>
                     </div>
                     <div class="p-4 flex flex-col sm:flex-row justify-center gap-4">
-                        <button
-                            type="button"
-                            class="inline-flex items-center justify-center px-6 py-3 border border-transparent font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-                            @click="downloadOptimizedResume()">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
-                            </svg>
-                            Download Optimized Resume
-                        </button>
+                        <div class="relative" x-data="{ open: false }">
+                            <button
+                                type="button"
+                                class="inline-flex items-center justify-center px-6 py-3 border border-transparent font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                                @click="open = !open">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                                Download Optimized Resume
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <div
+                                x-show="open"
+                                @click.away="open = false"
+                                class="absolute z-10 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                x-transition:enter="transition ease-out duration-100"
+                                x-transition:enter-start="transform opacity-0 scale-95"
+                                x-transition:enter-end="transform opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-75"
+                                x-transition:leave-start="transform opacity-100 scale-100"
+                                x-transition:leave-end="transform opacity-0 scale-95">
+                                <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                                    <button
+                                        @click="downloadOptimizedResume('pdf'); open = false"
+                                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                                        role="menuitem">
+                                        <div class="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                                            </svg>
+                                            PDF Format
+                                        </div>
+                                    </button>
+                                    <button
+                                        @click="downloadOptimizedResume('latex'); open = false"
+                                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                                        role="menuitem">
+                                        <div class="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                                            </svg>
+                                            LaTeX Format (Editable)
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         <a
                             href="/dashboard"
                             class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 shadow-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
@@ -716,16 +756,26 @@
                 }, 1000);
             },
 
-            // Download the optimized resume as PDF
-            async downloadOptimizedResume() {
+            // Download the optimized resume in the specified format
+            async downloadOptimizedResume(format = 'pdf') {
                 if (!this.resumeId) return;
 
                 try {
+                    let downloadUrl = '';
+
+                    if (format === 'latex') {
+                        // Download as LaTeX source
+                        downloadUrl = `/api/resume/${this.resumeId}/download-latex`;
+                    } else {
+                        // Default to PDF
+                        downloadUrl = `/api/resume/${this.resumeId}/download?use_optimized=true`;
+                    }
+
                     // Open the download URL in a new tab
-                    window.open(`/api/resume/${this.resumeId}/download?use_optimized=true`, '_blank');
+                    window.open(downloadUrl, '_blank');
                 } catch (error) {
-                    console.error('Error downloading resume:', error);
-                    window.showErrorToast('Failed to download resume. Please try again.');
+                    console.error(`Error downloading resume as ${format}:`, error);
+                    window.showErrorToast(`Failed to download resume as ${format}. Please try again.`);
                 }
             },
 

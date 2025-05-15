@@ -26,7 +26,7 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, EmailStr, Field
 
 from app.database.models.resume import Resume, ResumeData
@@ -991,6 +991,96 @@ async def download_resume(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating PDF: {str(e)}",
+        )
+
+
+@resume_router.get(
+    "/{resume_id}/download-latex",
+    summary="Download a resume as LaTeX source",
+    response_description="LaTeX source file downloaded successfully",
+)
+async def download_resume_latex(
+    resume_id: str,
+    template: str = "resume_template.tex",
+    repo: ResumeRepository = Depends(get_resume_repository),
+):
+    """Download a resume as a LaTeX source file.
+
+    This endpoint generates LaTeX source code for the resume using LaTeX templates.
+    It uses the optimized version of the resume.
+
+    Args:
+        resume_id: ID of the resume to download
+        template: LaTeX template to use for generating the LaTeX source
+        repo: Resume repository instance
+
+    Returns:
+    -------
+        Response: LaTeX source file download
+
+    Raises:
+    ------
+        HTTPException: If the resume is not found or LaTeX generation fails
+    """
+    # Check if resume_id is "undefined" or invalid
+    if resume_id == "undefined" or not resume_id:
+        logger.error(f"Invalid resume ID for LaTeX download: {resume_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid resume ID. Please provide a valid resume ID.",
+        )
+
+    try:
+        resume = await repo.get_resume_by_id(resume_id)
+        if not resume:
+            logger.warning(f"Resume not found with ID: {resume_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Resume with ID {resume_id} not found",
+            )
+    except Exception as e:
+        logger.error(f"Error retrieving resume with ID {resume_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving resume: {str(e)}",
+        )
+
+    if not resume.get("optimized_data"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Optimized resume data not available. Please optimize the resume first.",
+        )
+
+    try:
+        # Define the absolute path to the templates directory within the Docker container
+        container_template_dir = "/code/app/services/resume/latex_templates"
+        generator = LaTeXGenerator(container_template_dir)
+
+        json_data = resume["optimized_data"]
+
+        if isinstance(json_data, str):
+            generator.parse_json_from_string(json_data)
+        else:
+            generator.json_data = json_data
+
+        latex_content = generator.generate_from_template(template)
+        if not latex_content:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to generate LaTeX content",
+            )
+
+        filename = f"{resume.get('title', 'resume')}_{secrets.token_hex(4)}.tex"
+
+        return Response(
+            content=latex_content,
+            media_type="application/x-latex",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating LaTeX: {str(e)}",
         )
 
 
