@@ -261,9 +261,12 @@ class PromptRepository(BaseRepository):
                     PromptTemplate(
                         name="resume_optimization",
                         description="Prompt for optimizing a resume based on a job description",
-                        template=resume_template,
+                        # Ensure the template uses double curly braces for the recommended_skills_section placeholder
+                        # This way it won't be treated as a variable by the PromptTemplate
+                        template=resume_template.replace("{recommended_skills_section}", "{{recommended_skills_section}}"),
                         component="resume_optimization",
-                        variables=["job_description", "resume", "recommended_skills_section"],
+                        # Remove recommended_skills_section from variables since it's not a real variable
+                        variables=["job_description", "resume"],
                     ),
                 ]
 

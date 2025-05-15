@@ -412,16 +412,36 @@ class AtsResumeOptimizer:
                     """
 
                     # Format the template with the recommended skills section
-                    formatted_template = db_template.replace("{recommended_skills_section}", recommended_skills_section)
-                    custom_prompt = PromptTemplate.from_template(template=formatted_template)
+                    # Handle both double and triple curly braces for the placeholder
+                    formatted_template = db_template
+                    if "{{recommended_skills_section}}" in formatted_template:
+                        formatted_template = formatted_template.replace("{{recommended_skills_section}}", recommended_skills_section)
+                    elif "{{{recommended_skills_section}}}" in formatted_template:
+                        formatted_template = formatted_template.replace("{{{recommended_skills_section}}}", recommended_skills_section)
+                    elif "{recommended_skills_section}" in formatted_template:
+                        formatted_template = formatted_template.replace("{recommended_skills_section}", recommended_skills_section)
+
+                    # Ensure we're only using the variables that are actually in the template
+                    custom_prompt = PromptTemplate.from_template(
+                        template=formatted_template,
+                        template_format="jinja2",
+                        partial_variables={}
+                    )
 
                     # Create a new chain with the custom prompt
                     custom_chain = custom_prompt | self.llm
 
-                    # Generate optimized resume using the custom chain
-                    result = custom_chain.invoke(
-                        {"job_description": job_description, "resume": self.resume}
-                    )
+                    try:
+                        # Generate optimized resume using the custom chain
+                        result = custom_chain.invoke(
+                            {"job_description": job_description, "resume": self.resume}
+                        )
+                    except Exception as template_error:
+                        print(f"Error using database prompt: {template_error}. Using default prompt.")
+                        # Fall back to default chain
+                        result = self.chain.invoke(
+                            {"job_description": job_description, "resume": self.resume}
+                        )
                 else:
                     # Use the default chain
                     result = self.chain.invoke(
