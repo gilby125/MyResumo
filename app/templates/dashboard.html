@@ -545,36 +545,85 @@
                     <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <h4 class="text-sm font-medium text-blue-800 mb-2">Processing Your Resume</h4>
 
-                        <div class="space-y-2">
-                            <div class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                                <span class="text-xs text-blue-700">Analyzing resume against job description</span>
+                        <!-- Progress Bar -->
+                        <div class="relative pt-1">
+                            <div class="flex mb-2 items-center justify-between">
+                                <div>
+                                    <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-100">
+                                        Optimization Progress
+                                    </span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs font-semibold inline-block text-blue-600" x-text="`${scoringProgress}%`">
+                                        0%
+                                    </span>
+                                </div>
                             </div>
-
-                            <div class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                </svg>
-                                <span class="text-xs text-blue-700">Generating optimized version</span>
-                            </div>
-
-                            <div class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                                <span class="text-xs text-blue-700">Calculating improvement score</span>
+                            <div class="overflow-hidden h-2 mb-4 text-xs flex rounded-full bg-blue-100">
+                                <div
+                                    :style="`width: ${scoringProgress}%`"
+                                    class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-300">
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mt-3">
-                            <div class="w-full bg-blue-200 rounded-full h-1.5">
-                                <div class="bg-blue-600 h-1.5 rounded-full animate-pulse"></div>
+                        <!-- Status Messages -->
+                        <div class="mt-4 space-y-2">
+                            <div class="flex items-center" :class="{'text-gray-400': scoringProgress < 25, 'text-blue-600': scoringProgress >= 25}">
+                                <div class="flex-shrink-0 h-6 w-6 rounded-full border-2 flex items-center justify-center"
+                                     :class="{'border-gray-300': scoringProgress < 25, 'border-blue-500 bg-blue-50': scoringProgress >= 25}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                         :class="{'text-gray-400': scoringProgress < 25, 'text-blue-600': scoringProgress >= 25}">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <span class="ml-3 text-xs font-medium">Analyzing resume content</span>
                             </div>
-                            <p class="mt-2 text-xs text-blue-600">
-                                This process typically takes 30-60 seconds. We're using AI to analyze your resume, identify missing skills, and create an optimized version tailored to the job description.
-                            </p>
+
+                            <div class="flex items-center" :class="{'text-gray-400': scoringProgress < 40, 'text-blue-600': scoringProgress >= 40}">
+                                <div class="flex-shrink-0 h-6 w-6 rounded-full border-2 flex items-center justify-center"
+                                     :class="{'border-gray-300': scoringProgress < 40, 'border-blue-500 bg-blue-50': scoringProgress >= 40}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                         :class="{'text-gray-400': scoringProgress < 40, 'text-blue-600': scoringProgress >= 40}">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <span class="ml-3 text-xs font-medium">Analyzing job requirements</span>
+                            </div>
+
+                            <div class="flex items-center" :class="{'text-gray-400': scoringProgress < 65, 'text-blue-600': scoringProgress >= 65}">
+                                <div class="flex-shrink-0 h-6 w-6 rounded-full border-2 flex items-center justify-center"
+                                     :class="{'border-gray-300': scoringProgress < 65, 'border-blue-500 bg-blue-50': scoringProgress >= 65}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                         :class="{'text-gray-400': scoringProgress < 65, 'text-blue-600': scoringProgress >= 65}">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <span class="ml-3 text-xs font-medium">Enhancing content</span>
+                            </div>
+
+                            <div class="flex items-center" :class="{'text-gray-400': scoringProgress < 85, 'text-blue-600': scoringProgress >= 85}">
+                                <div class="flex-shrink-0 h-6 w-6 rounded-full border-2 flex items-center justify-center"
+                                     :class="{'border-gray-300': scoringProgress < 85, 'border-blue-500 bg-blue-50': scoringProgress >= 85}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                         :class="{'text-gray-400': scoringProgress < 85, 'text-blue-600': scoringProgress >= 85}">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <span class="ml-3 text-xs font-medium">Finalizing your resume</span>
+                            </div>
+                        </div>
+
+                        <!-- Current Activity -->
+                        <div class="mt-4 text-center">
+                            <div class="inline-flex items-center px-3 py-1 bg-white border border-blue-100 rounded-full shadow-sm">
+                                <div class="animate-pulse w-2 h-2 bg-blue-600 rounded-full mr-2"></div>
+                                <p class="text-xs text-gray-700" x-text="scoringProgressMessage">Initializing...</p>
+                            </div>
+
+                            <div class="mt-3 text-xs text-gray-500">
+                                <p>This typically takes about 30-60 seconds</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -782,6 +831,9 @@
             jobDescription: '',
             temperature: 0.0,
             scoreResults: {},
+            scoringProgress: 0,
+            scoringProgressMessage: 'Initializing...',
+            progressInterval: null,
 
             // Initialize the component and fetch data
             async init() {
@@ -801,6 +853,11 @@
                     this.pageLeaving = true;
                     this.showDeleteModal = false;
                     this.resumeToDelete = null;
+
+                    // Clear any active intervals
+                    if (this.progressInterval) {
+                        clearInterval(this.progressInterval);
+                    }
                 });
 
                 // For Chromium-based browsers (Edge, Brave, Chrome)
@@ -809,6 +866,11 @@
                         this.pageLeaving = true;
                         this.showDeleteModal = false;
                         this.resumeToDelete = null;
+
+                        // Clear any active intervals
+                        if (this.progressInterval) {
+                            clearInterval(this.progressInterval);
+                        }
                     }
                 });
 
@@ -1052,11 +1114,38 @@
                 this.temperature = 0.0;   // Reset temperature to default
             },
 
+            // Simulate progress animation during scoring/optimization
+            startProgressSimulation() {
+                this.scoringProgress = 0;
+                this.scoringProgressMessage = 'Analyzing resume content...';
+
+                this.progressInterval = setInterval(() => {
+                    if (this.scoringProgress < 95) {
+                        this.scoringProgress += Math.floor(Math.random() * 15);
+                        if (this.scoringProgress > 95) this.scoringProgress = 95;
+
+                        // Update progress message based on progress
+                        if (this.scoringProgress < 30) {
+                            this.scoringProgressMessage = 'Analyzing key skills...';
+                        } else if (this.scoringProgress < 60) {
+                            this.scoringProgressMessage = 'Analyzing job requirements...';
+                        } else if (this.scoringProgress < 80) {
+                            this.scoringProgressMessage = 'Enhancing content...';
+                        } else {
+                            this.scoringProgressMessage = 'Finalizing your optimized resume...';
+                        }
+                    }
+                }, 1000);
+            },
+
             // Submit score resume
             async submitScoreResume() {
                 if (!this.jobDescription.trim()) return;
 
                 this.isScoring = true;
+
+                // Start progress animation
+                this.startProgressSimulation();
 
                 try {
                     const response = await fetch(`/api/resume/${this.resumeToScore}/score`, {
@@ -1072,16 +1161,27 @@
 
                     if (response.ok) {
                         const data = await response.json();
+
+                        // Complete the progress simulation
+                        clearInterval(this.progressInterval);
+                        this.scoringProgress = 100;
+                        this.scoringProgressMessage = 'Optimization complete!';
+
+                        // Short delay to show 100% completion
+                        await new Promise(resolve => setTimeout(resolve, 500));
+
                         this.scoreResults = data;
                         this.showScoreModal = false;
                         this.showScoreResultsModal = true;
                     } else {
                         console.error('Failed to score resume');
                         this.showNotification('Failed to score resume', 'error');
+                        clearInterval(this.progressInterval);
                     }
                 } catch (error) {
                     console.error('Error scoring resume:', error);
                     this.showNotification('Error connecting to server', 'error');
+                    clearInterval(this.progressInterval);
                 } finally {
                     this.isScoring = false;
                 }
@@ -1089,6 +1189,9 @@
 
             // Cancel score modal
             cancelScoreModal() {
+                if (this.progressInterval) {
+                    clearInterval(this.progressInterval);
+                }
                 this.showScoreModal = false;
                 this.jobDescription = '';
             },

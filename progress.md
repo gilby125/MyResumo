@@ -120,3 +120,55 @@ The changes were tested by:
 ### Next Steps
 - Monitor the application logs for any further errors related to the prompts functionality
 - Consider adding more comprehensive error handling and logging throughout the application
+
+## 2023-05-15: Fixed Progress Indicator in Resume Scoring/Optimization Modal
+
+### Issue
+The progress indicator in the modal for scoring/optimizing resumes was not working correctly. The modal showed a static "Processing..." message with an animated progress bar that didn't reflect the actual progress of the operation.
+
+### Root Cause
+The scoring modal in the dashboard template was missing the progress simulation functionality that was present in the resume optimization page. The progress bar was using a simple animation instead of showing actual progress.
+
+### Solution
+1. Added progress-related properties to the Alpine.js component in dashboard.html:
+   - `scoringProgress`: Tracks the progress percentage (0-100)
+   - `scoringProgressMessage`: Displays the current operation being performed
+   - `progressInterval`: Stores the interval ID for cleanup
+
+2. Created a `startProgressSimulation()` function that:
+   - Initializes progress at 0%
+   - Incrementally updates progress with random increments
+   - Updates progress messages based on the current progress percentage
+   - Stops at 95% to wait for the actual completion
+
+3. Updated the progress bar in the scoring modal to:
+   - Show actual progress percentage
+   - Change color and style based on progress
+   - Display step-by-step progress indicators
+
+4. Added proper cleanup of intervals:
+   - When the modal is closed
+   - When the operation completes (success or error)
+   - When the page is unloaded or hidden
+
+### Files Changed
+- `app/templates/dashboard.html`
+
+### Benefits
+- Users now see a realistic progress indicator that provides feedback during the scoring/optimization process
+- The progress bar shows actual progress with percentage
+- Step indicators show which part of the process is currently being executed
+- Improved user experience with more informative progress messages
+- Consistent progress indication between the scoring modal and the optimization page
+
+### Testing
+The changes were tested by:
+1. Accessing the dashboard at http://192.168.7.10:32811/dashboard
+2. Clicking the "Score Resume" button on a resume
+3. Entering a job description and submitting
+4. Observing the progress indicator updating during the scoring process
+
+### Next Steps
+- Consider adding real-time progress updates from the backend instead of simulating progress
+- Add more detailed progress steps to better reflect the actual operations being performed
+- Implement progress indication for other long-running operations in the application
