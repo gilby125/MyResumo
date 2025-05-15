@@ -1,6 +1,7 @@
 """Test cases for resume download functionality."""
 import json
 import pytest
+import pytest_asyncio
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -63,100 +64,95 @@ SAMPLE_RESUME_DATA = {
     }
 }
 
-@pytest.mark.asyncio
-async def test_download_resume_pdf_endpoint():
+def test_download_resume_pdf_endpoint():
     """Test the PDF resume download endpoint."""
     with patch("app.api.routers.resume.ResumeRepository") as mock_repo, \
          patch("app.api.routers.resume.LaTeXGenerator") as mock_generator, \
          patch("app.api.routers.resume.create_temporary_pdf") as mock_create_pdf:
-        
+
         # Setup mocks
         mock_repo.return_value.get_resume_by_id = AsyncMock(return_value=SAMPLE_RESUME_DATA)
         mock_generator.return_value.generate_from_template.return_value = "Sample LaTeX content"
         mock_create_pdf.return_value = "/tmp/test_resume.pdf"
-        
+
         # Test the endpoint
         response = client.get("/api/resume/test_resume_id/download?use_optimized=true")
-        
+
         # Verify response
         assert response.status_code == 200
         assert response.headers["content-type"] == "application/pdf"
         assert "attachment" in response.headers["content-disposition"]
-        
+
         # Verify mocks were called correctly
         mock_repo.return_value.get_resume_by_id.assert_called_once_with("test_resume_id")
         mock_generator.return_value.generate_from_template.assert_called_once()
         mock_create_pdf.assert_called_once_with("Sample LaTeX content")
 
-@pytest.mark.asyncio
-async def test_download_resume_latex_endpoint():
+def test_download_resume_latex_endpoint():
     """Test the LaTeX resume download endpoint."""
     with patch("app.api.routers.resume.ResumeRepository") as mock_repo, \
          patch("app.api.routers.resume.LaTeXGenerator") as mock_generator:
-        
+
         # Setup mocks
         mock_repo.return_value.get_resume_by_id = AsyncMock(return_value=SAMPLE_RESUME_DATA)
         mock_generator.return_value.generate_from_template.return_value = "Sample LaTeX content"
-        
+
         # Test the endpoint
         response = client.get("/api/resume/test_resume_id/download-latex")
-        
+
         # Verify response
         assert response.status_code == 200
         assert response.headers["content-type"] == "application/x-latex"
         assert "attachment" in response.headers["content-disposition"]
         assert response.content == b"Sample LaTeX content"
-        
+
         # Verify mocks were called correctly
         mock_repo.return_value.get_resume_by_id.assert_called_once_with("test_resume_id")
         mock_generator.return_value.generate_from_template.assert_called_once()
 
-@pytest.mark.asyncio
-async def test_download_resume_invalid_id():
+def test_download_resume_invalid_id():
     """Test resume download with invalid ID."""
     with patch("app.api.routers.resume.ResumeRepository") as mock_repo:
         # Setup mock to return None (resume not found)
         mock_repo.return_value.get_resume_by_id = AsyncMock(return_value=None)
-        
+
         # Test PDF endpoint
         response_pdf = client.get("/api/resume/invalid_id/download?use_optimized=true")
         assert response_pdf.status_code == 404
-        
+
         # Test LaTeX endpoint
         response_latex = client.get("/api/resume/invalid_id/download-latex")
         assert response_latex.status_code == 404
 
-@pytest.mark.asyncio
-async def test_download_resume_no_optimized_data():
+def test_download_resume_no_optimized_data():
     """Test resume download with no optimized data."""
     with patch("app.api.routers.resume.ResumeRepository") as mock_repo:
         # Setup mock to return resume without optimized data
         resume_data = SAMPLE_RESUME_DATA.copy()
         resume_data.pop("optimized_data")
         mock_repo.return_value.get_resume_by_id = AsyncMock(return_value=resume_data)
-        
+
         # Test PDF endpoint
         response_pdf = client.get("/api/resume/test_resume_id/download?use_optimized=true")
         assert response_pdf.status_code == 400
-        
+
         # Test LaTeX endpoint
         response_latex = client.get("/api/resume/test_resume_id/download-latex")
         assert response_latex.status_code == 400
 
-@pytest.mark.asyncio
-async def test_download_resume_latex_generation_error():
+def test_download_resume_latex_generation_error():
     """Test resume download with LaTeX generation error."""
     with patch("app.api.routers.resume.ResumeRepository") as mock_repo, \
          patch("app.api.routers.resume.LaTeXGenerator") as mock_generator:
-        
+
         # Setup mocks
         mock_repo.return_value.get_resume_by_id = AsyncMock(return_value=SAMPLE_RESUME_DATA)
         mock_generator.return_value.generate_from_template.return_value = False  # Simulate generation failure
-        
+
         # Test PDF endpoint
         response_pdf = client.get("/api/resume/test_resume_id/download?use_optimized=true")
         assert response_pdf.status_code == 500
-        
+
         # Test LaTeX endpoint
         response_latex = client.get("/api/resume/test_resume_id/download-latex")
         assert response_latex.status_code == 500
