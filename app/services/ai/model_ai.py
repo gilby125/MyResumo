@@ -247,7 +247,18 @@ class AtsResumeOptimizer:
 
         ## OUTPUT FORMAT:
 
-        You MUST return ONLY a valid JSON object with NO additional text, explanation, or commentary.
+        ⚠️ CRITICAL INSTRUCTION ⚠️
+
+        YOU MUST RETURN ONLY A VALID JSON OBJECT WITH ABSOLUTELY NO OTHER TEXT.
+
+        DO NOT:
+        - Add any introduction like "Here's the JSON" or "Here's the optimized resume"
+        - Add any explanation or commentary before or after the JSON
+        - Wrap the JSON in markdown code blocks (```json)
+        - Add any notes, tips, or additional information
+
+        YOUR ENTIRE RESPONSE MUST BE PARSEABLE BY json.loads() IN PYTHON.
+
         The JSON must follow this EXACT structure:
 
         {{{{
@@ -321,6 +332,8 @@ class AtsResumeOptimizer:
         6. DO NOT include any text like "Here's the optimized resume" or "Here's the JSON"
         7. Your response MUST be a valid JSON object that can be parsed with json.loads()
         8. DO NOT wrap the JSON in markdown code blocks or any other formatting
+
+        ⚠️ FINAL REMINDER: YOUR ENTIRE RESPONSE MUST BE ONLY THE JSON OBJECT ⚠️
         """
         return PromptTemplate.from_template(template=template)
 
@@ -522,7 +535,41 @@ class AtsResumeOptimizer:
                         except json.JSONDecodeError:
                             print(f"Failed to parse JSON-like structure. Trying next method.")
 
-                    # Fallback 3: If the response is text, try to convert it to a structured format
+                    # Fallback 3: Check for conversational responses and try to extract JSON
+                    print("Checking for conversational responses with JSON content...")
+
+                    # Look for patterns like "Here's the JSON:" or "Here's the optimized resume:"
+                    conversational_patterns = [
+                        r"(?:here(?:'s| is) the (?:json|optimized resume)(?:\:|\s+))([\s\S]*)",
+                        r"(?:I've created|I have created|I've generated|I have generated)(?:[\s\S]*?)((?:\{[\s\S]*\}))",
+                        r"(?:please find|here is)(?:[\s\S]*?)((?:\{[\s\S]*\}))",
+                    ]
+
+                    for pattern in conversational_patterns:
+                        match = re.search(pattern, content, re.IGNORECASE)
+                        if match:
+                            try:
+                                # Try to find a JSON object in the matched content
+                                json_match = re.search(r"(\{[\s\S]*\})", match.group(1))
+                                if json_match:
+                                    json_str = json_match.group(1)
+                                    json_result = json.loads(json_str)
+
+                                    # Enrich result with ATS analysis metrics
+                                    if score_results:
+                                        json_result["ats_metrics"] = {
+                                            "initial_score": score_results.get("final_score", 0),
+                                            "matching_skills": score_results.get("matching_skills", []),
+                                            "missing_skills": score_results.get("missing_skills", []),
+                                            "recommendation": score_results.get("recommendation", "")
+                                        }
+
+                                    print("Successfully extracted JSON from conversational response.")
+                                    return json_result
+                            except json.JSONDecodeError:
+                                print(f"Found potential JSON in conversational response but failed to parse it.")
+
+                    # Fallback 4: If the response is text, try to convert it to a structured format
                     print("All JSON extraction methods failed. Attempting to create structured data from text response.")
 
                     # Create a basic structured response from the text

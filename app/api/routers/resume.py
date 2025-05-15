@@ -706,6 +706,21 @@ async def optimize_resume(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="AI service request timed out. Please try again later.",
             )
+        elif "json" in str(e).lower() or "extract" in str(e).lower() or "parse" in str(e).lower():
+            logger.error("JSON extraction error from AI response")
+
+            # Try to extract the first part of the response for debugging
+            error_msg = str(e)
+            response_preview = ""
+            if "Could not extract valid JSON from response:" in error_msg:
+                response_preview = error_msg.split("Could not extract valid JSON from response:", 1)[1].strip()[:100]
+                if response_preview:
+                    response_preview = f" Response starts with: '{response_preview}...'"
+
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"The AI service returned a response that could not be processed as JSON. Please try again with a lower temperature setting (0.0 recommended).{response_preview}",
+            )
         else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
