@@ -35,7 +35,19 @@ from app.web.core import core_web_router
 from app.web.dashboard import web_router
 
 # Initialize Jinja2 templates for HTML rendering
-templates = Jinja2Templates(directory="app/templates")
+# Setup templates with custom context processor
+class CustomTemplates(Jinja2Templates):
+    def TemplateResponse(self, name, context, *args, **kwargs):
+        # Add current_year and version to context if not already present
+        request = context.get("request")
+        if request and hasattr(request, "state"):
+            if "current_year" not in context and hasattr(request.state, "current_year"):
+                context["current_year"] = request.state.current_year
+            if "version" not in context and hasattr(request.state, "version"):
+                context["version"] = request.state.version
+        return super().TemplateResponse(name, context, *args, **kwargs)
+
+templates = CustomTemplates(directory="app/templates")
 
 
 async def startup_logic(app: FastAPI) -> None:
@@ -210,6 +222,10 @@ async def add_response_headers(request: Request, call_next):
     -------
         The response with added security headers
     """
+    # Store the current year in the request state for templates
+    request.state.current_year = datetime.now().year
+    request.state.version = __version__
+
     response = await call_next(request)
 
     # Add security headers

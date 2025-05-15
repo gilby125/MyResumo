@@ -11,7 +11,6 @@ from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app.version import __version__
 from app.web.base_router import WebRouter
 
 # Setup templates
@@ -42,7 +41,7 @@ async def home(
     -------
         HTMLResponse: The rendered home page
     """
-    return templates.TemplateResponse("index.html", {"request": request, "version": __version__})
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @core_web_router.get(
@@ -66,7 +65,7 @@ async def about(
     -------
         HTMLResponse: The rendered about page
     """
-    return templates.TemplateResponse("about.html", {"request": request, "version": __version__})
+    return templates.TemplateResponse("about.html", {"request": request})
 
 
 @core_web_router.get(
@@ -87,4 +86,4 @@ async def contribution(
     -------
         HTMLResponse: Rendered HTML template for contribution page
     """
-    return templates.TemplateResponse("contribution.html", {"request": request, "version": __version__})
+    return templates.TemplateResponse("contribution.html", {"request": request})

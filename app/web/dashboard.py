@@ -9,7 +9,6 @@ from fastapi import Path, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app.version import __version__
 from app.web.base_router import WebRouter
 
 web_router = WebRouter()
@@ -37,7 +36,7 @@ async def dashboard(
     -------
         HTMLResponse: The rendered dashboard page
     """
-    return templates.TemplateResponse("dashboard.html", {"request": request, "version": __version__})
+    return templates.TemplateResponse("dashboard.html", {"request": request})
 
 
 @web_router.get(
@@ -61,7 +60,7 @@ async def create_resume(
     -------
         HTMLResponse: The rendered resume creation page
     """
-    return templates.TemplateResponse("create.html", {"request": request, "version": __version__})
+    return templates.TemplateResponse("create.html", {"request": request})
 
 
 @web_router.get(
@@ -90,7 +89,7 @@ async def view_resume(
     # In a complete implementation, we would fetch the resume data
     # from the API and pass it to the template
     return templates.TemplateResponse(
-        "resume_view.html", {"request": request, "resume_id": resume_id, "version": __version__}
+        "resume_view.html", {"request": request, "resume_id": resume_id}
     )
 
 
@@ -123,7 +122,6 @@ async def optimize_resume_page(
             "request": request,
             "resume_id": resume_id,
             "page_title": "Optimize Resume",
-            "version": __version__,
         },
     )
 
@@ -149,4 +147,4 @@ async def settings(
     -------
         HTMLResponse: The rendered settings page
     """
-    return templates.TemplateResponse("settings.html", {"request": request, "version": __version__})
+    return templates.TemplateResponse("settings.html", {"request": request})
