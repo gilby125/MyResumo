@@ -12,6 +12,9 @@ from datetime import datetime
 # Import version information
 from app.version import __version__, get_version_info
 
+# Import debug script
+import app.debug_version
+
 # Load environment variables from .env.local if it exists (for local development)
 env_local_path = pathlib.Path(__file__).parent.parent / '.env.local'
 if env_local_path.exists():

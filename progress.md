@@ -1,5 +1,40 @@
 # Progress Tracking
 
+## 2025-05-15: Fixed Docker Compose Configuration
+
+### Changes Made
+1. **Fixed `docker-compose.override.yml`**:
+   - Removed shell commands that don't work properly in Docker Compose
+   - Changed `APP_VERSION` to use environment variables instead of shell commands
+   - Made `no_cache` configurable via environment variables
+   - Added proper comments to explain configuration options
+
+2. **Updated `.env` file**:
+   - Added build configuration variables:
+     - `CACHE_BUST`: For cache busting during builds
+     - `NO_CACHE`: To control Docker build caching
+     - `APP_VERSION`: Default application version
+
+3. **Updated `docker-compose.yml`**:
+   - Made `MONGODB_URL` configurable via environment variables
+   - Added fallback to internal MongoDB container if not specified
+
+4. **Created Project Layout Documentation**:
+   - Added `PROJECT_LAYOUT.MD` with detailed project structure
+   - Documented key components, configuration files, and workflows
+   - Added application information and deployment details
+
+### Benefits
+- Improved Docker build process with better caching control
+- More flexible configuration through environment variables
+- Better documentation of project structure
+- Easier deployment to different environments
+
+### Next Steps
+- Test Docker Compose configuration to ensure it works correctly
+- Update README.md with latest changes
+- Consider implementing a CI/CD pipeline for automated builds and deployments
+
 ## 2023-07-10: Environment Variable Refactoring
 
 ### Changes Made

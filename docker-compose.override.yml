@@ -7,5 +7,10 @@ services:
       dockerfile: Dockerfile
       args:
         BUILDKIT_INLINE_CACHE: "0"
-        CACHE_BUST: "${CACHE_BUST:-$(date +%s)}"
-      no_cache: true
+        # Use a fixed value or environment variable for cache busting
+        CACHE_BUST: "${CACHE_BUST:-1}"
+      # Use cache by default, control with DOCKER_BUILDKIT=0 if needed
+      no_cache: ${NO_CACHE:-false}
+    environment:
+      # Set a static version or use the one from version.txt
+      - APP_VERSION=${APP_VERSION:-2.0.0}

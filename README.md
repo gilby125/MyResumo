@@ -131,11 +131,23 @@ docker run -d --name mongodb -p 27017:27017 mongo:latest
 Create a `.env` file in the project root with the following variables:
 
 ```
+# API Configuration
 API_KEY=your_api_key_here
-MONGODB_URL=mongodb://username:password@host:port/
+API_BASE=https://api.deepseek.com/v1
+MODEL_NAME=deepseek-chat
+
+# Database Configuration
+MONGODB_URL=mongodb://username:password@host:port/myresumo
+
+# Build Configuration (for Docker)
+CACHE_BUST=1
+NO_CACHE=false
+APP_VERSION=2.0.0
 ```
 
-### Using Official Docker Image (Recommended)
+For more details on the project structure and configuration, see the [PROJECT_LAYOUT.MD](PROJECT_LAYOUT.MD) file.
+
+### Using Official Docker Image
 
 The fastest way to get started is to use our official Docker image:
 
@@ -154,6 +166,36 @@ docker run -d --name myresumo \
   -e MONGODB_URL=mongodb://username:password@host:port/ \
   ghcr.io/analyticace/myresumo:latest
 ```
+
+### Using Docker Compose (Recommended for Development)
+
+For a more complete development environment with MongoDB included, use Docker Compose:
+
+1. Clone the repository:
+```bash
+git clone https://github.com/AnalyticAce/MyResumo.git
+cd MyResumo
+```
+
+2. Create a `.env` file with your configuration:
+```
+API_KEY=your_api_key_here
+API_BASE=https://api.deepseek.com/v1
+MODEL_NAME=deepseek-chat
+MONGODB_URL=mongodb://mongodb:27017/myresumo
+# Build configuration
+CACHE_BUST=1
+NO_CACHE=false
+# Application version
+APP_VERSION=2.0.0
+```
+
+3. Start the application with Docker Compose:
+```bash
+docker-compose up -d
+```
+
+This will start both the MyResumo application and a MongoDB instance. The application will be available at `http://localhost:8080`.
 
 ## Alternative AI Models
 
