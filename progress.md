@@ -288,3 +288,58 @@ The new tests were executed against the running application at http://192.168.7.
 - Add more comprehensive API testing
 - Implement load testing for high-traffic scenarios
 - Create a test data generation script for more realistic test data
+
+## 2025-05-16: Fixed Resume Optimization and Prompt Template Issues
+
+### Issues
+1. **Prompt Template Syntax Error**: The application was encountering an error when using database prompts for resume optimization:
+   ```
+   Error using database prompt: expected token 'end of print statement', got ':'. Using default prompt.
+   ```
+
+2. **JSON Decode Error and model_dump Error**: When updating optimized resume data, the application was encountering an error:
+   ```
+   Error updating optimized data: 'dict' object has no attribute 'model_dump'
+   ```
+
+### Root Causes
+1. **Prompt Template Issue**: The error was occurring because of a conflict between Jinja2 template syntax and the content of the prompt template. The `{recommended_skills_section}` placeholder in the template was being treated as a Jinja2 variable, but it contained special characters that Jinja2 couldn't parse correctly.
+
+2. **model_dump Issue**: The `update_optimized_data` method in `ResumeRepository` was expecting the `optimized_data` parameter to be a Pydantic model with a `model_dump()` method, but in some cases it was receiving a dictionary instead.
+
+### Solutions
+1. **Prompt Template Fix**:
+   - Modified the prompt template handling in `app/services/ai/model_ai.py` to use `partial_variables` for the `recommended_skills_section` placeholder
+   - Added a fallback mechanism that manually replaces the placeholder if template parsing fails
+   - Added support for multiple placeholder formats
+   - Used explicit template format specification with `template_format="jinja2"`
+
+2. **model_dump Fix**:
+   - Modified the `update_optimized_data` method in `app/database/repositories/resume_repository.py` to handle different types of input data
+   - Added type checking to detect if the input has a `model_dump()` method
+   - Added handling for dictionary inputs
+   - Added fallback conversion for other object types
+   - Applied the same fix to the `optimize_resume` and `score_resume` functions in `app/api/routers/resume.py`
+
+### Files Changed
+- `app/services/ai/model_ai.py`
+- `app/database/repositories/resume_repository.py`
+- `app/api/routers/resume.py`
+
+### Testing
+The changes were tested by:
+1. Creating a test script (`test_fixes.py`) to verify the prompt template parsing with different placeholder formats
+2. Testing the model_dump handling with different types of input data
+3. Verifying that the resume optimization process works correctly with the fixes
+
+### Benefits
+- More robust prompt template handling that can handle different placeholder formats
+- Better error handling in the resume optimization process
+- Improved type handling for different data structures
+- More detailed error logging and reporting
+
+### Next Steps
+- Monitor the application logs for any further errors related to the resume optimization process
+- Consider adding more comprehensive validation for input data types
+- Add unit tests for the prompt template parsing and model_dump handling
+- Standardize the data handling approach across all repositories

@@ -46,10 +46,51 @@ Modified the button in `app/templates/prompts_editor.html`:
 
 This change properly separates the JavaScript logic (Alpine.js) from the Jinja2 template syntax, resolving the conflict.
 
+## Issue 3: Prompt Template Syntax Error
+
+### Problem
+When using the database prompt for resume optimization, the application was encountering an error:
+```
+Error using database prompt: expected token 'end of print statement', got ':'. Using default prompt.
+```
+
+### Root Cause
+The error was occurring because of a conflict between Jinja2 template syntax and the content of the prompt template. Specifically, the `{recommended_skills_section}` placeholder in the template was being treated as a Jinja2 variable, but it contained special characters that Jinja2 couldn't parse correctly.
+
+### Solution
+1. Modified the prompt template handling in `app/services/ai/model_ai.py` to:
+   - Use `partial_variables` to handle the `recommended_skills_section` placeholder separately
+   - Add a fallback mechanism that manually replaces the placeholder if the template parsing fails
+   - Support multiple placeholder formats (`{recommended_skills_section}`, `{{recommended_skills_section}}`, and `{{{recommended_skills_section}}}`)
+   - Use explicit template format specification with `template_format="jinja2"`
+
+2. Added better error handling to catch and report any issues with the prompt template
+
+## Issue 4: JSON Decode Error and model_dump Error
+
+### Problem
+When updating optimized resume data, the application was encountering an error:
+```
+Error updating optimized data: 'dict' object has no attribute 'model_dump'
+```
+
+### Root Cause
+The `update_optimized_data` method in `ResumeRepository` was expecting the `optimized_data` parameter to be a Pydantic model with a `model_dump()` method, but in some cases it was receiving a dictionary instead.
+
+### Solution
+1. Modified the `update_optimized_data` method in `app/database/repositories/resume_repository.py` to:
+   - Check if the `optimized_data` parameter has a `model_dump()` method
+   - Handle dictionaries directly if `optimized_data` is already a dictionary
+   - Attempt to convert other types to dictionaries using `vars()` if they have a `__dict__` attribute
+
+2. Applied the same fix to the `optimize_resume` and `score_resume` functions in `app/api/routers/resume.py` to ensure consistent handling of different data types
+
 ## Testing
-Both fixes have been implemented and should resolve the respective issues:
+All fixes have been implemented and should resolve the respective issues:
 1. The prompt update functionality should now work correctly without the 'bool' object error
 2. The prompts editor page should load without the Jinja2 template syntax error
+3. The prompt template parsing should work correctly with different placeholder formats
+4. The resume optimization process should handle different data types without errors
 
 ## Future Improvements
 1. Add more comprehensive validation for prompt updates
@@ -57,3 +98,4 @@ Both fixes have been implemented and should resolve the respective issues:
 3. Standardize the return types from database operations to avoid type checking
 4. Consider using a more robust error handling mechanism like Result objects
 5. Ensure proper separation of JavaScript and Jinja2 syntax throughout the templates
+6. Add more detailed error logging and monitoring for AI service interactions

@@ -144,8 +144,19 @@ class ResumeRepository(BaseRepository):
             else:
                 corrected_improvement = score_improvement
 
+            # Handle different types of optimized_data (dict or Pydantic model)
+            if hasattr(optimized_data, 'model_dump') and callable(getattr(optimized_data, 'model_dump')):
+                # It's a Pydantic model
+                optimized_data_dict = optimized_data.model_dump()
+            elif isinstance(optimized_data, dict):
+                # It's already a dictionary
+                optimized_data_dict = optimized_data
+            else:
+                # Try to convert to dict if it has a __dict__ attribute
+                optimized_data_dict = vars(optimized_data) if hasattr(optimized_data, '__dict__') else optimized_data
+
             update_dict = {
-                "optimized_data": optimized_data.model_dump(),
+                "optimized_data": optimized_data_dict,
                 "ats_score": corrected_ats_score,
                 "updated_at": datetime.now(),
             }

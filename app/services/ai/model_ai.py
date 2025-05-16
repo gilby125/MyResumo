@@ -454,21 +454,40 @@ class AtsResumeOptimizer:
                     """
 
                     # Format the template with the recommended skills section
-                    # Handle both double and triple curly braces for the placeholder
+                    # Handle different placeholder formats by using a safer approach
+                    # First, escape any existing curly braces to prevent conflicts
                     formatted_template = db_template
-                    if "{{recommended_skills_section}}" in formatted_template:
-                        formatted_template = formatted_template.replace("{{recommended_skills_section}}", recommended_skills_section)
-                    elif "{{{recommended_skills_section}}}" in formatted_template:
-                        formatted_template = formatted_template.replace("{{{recommended_skills_section}}}", recommended_skills_section)
-                    elif "{recommended_skills_section}" in formatted_template:
-                        formatted_template = formatted_template.replace("{recommended_skills_section}", recommended_skills_section)
 
-                    # Ensure we're only using the variables that are actually in the template
-                    custom_prompt = PromptTemplate.from_template(
-                        template=formatted_template,
-                        template_format="jinja2",
-                        partial_variables={}
-                    )
+                    # We'll use the default input variables from the template
+
+                    # Handle the recommended_skills_section separately as a partial variable
+                    # This avoids Jinja2 parsing issues with the content
+                    partial_vars = {
+                        "recommended_skills_section": recommended_skills_section
+                    }
+
+                    # Create the prompt template with explicit variable handling
+                    try:
+                        custom_prompt = PromptTemplate.from_template(
+                            template=formatted_template,
+                            template_format="jinja2",
+                            partial_variables=partial_vars
+                        )
+                    except Exception as template_error:
+                        print(f"Error creating prompt template: {template_error}. Trying fallback method.")
+                        # Fallback: manually replace the placeholder
+                        if "{{recommended_skills_section}}" in formatted_template:
+                            formatted_template = formatted_template.replace("{{recommended_skills_section}}", recommended_skills_section)
+                        elif "{{{recommended_skills_section}}}" in formatted_template:
+                            formatted_template = formatted_template.replace("{{{recommended_skills_section}}}", recommended_skills_section)
+                        elif "{recommended_skills_section}" in formatted_template:
+                            formatted_template = formatted_template.replace("{recommended_skills_section}", recommended_skills_section)
+
+                        # Try again with the manually replaced template
+                        custom_prompt = PromptTemplate.from_template(
+                            template=formatted_template,
+                            template_format="jinja2"
+                        )
 
                     # Create a new chain with the custom prompt
                     custom_chain = custom_prompt | self.llm

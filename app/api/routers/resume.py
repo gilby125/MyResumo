@@ -683,8 +683,19 @@ async def optimize_resume(
                 optimization_summary = result["optimization_summary"]
                 logger.info("Found optimization summary in result")
 
+            # Handle different types of optimized_data (dict or Pydantic model)
+            if hasattr(optimized_data, 'model_dump') and callable(getattr(optimized_data, 'model_dump')):
+                # It's a Pydantic model
+                optimized_data_dict = optimized_data.model_dump()
+            elif isinstance(optimized_data, dict):
+                # It's already a dictionary
+                optimized_data_dict = optimized_data
+            else:
+                # Try to convert to dict if it has a __dict__ attribute
+                optimized_data_dict = vars(optimized_data) if hasattr(optimized_data, '__dict__') else optimized_data
+
             await repo.update_optimized_data(
-                resume_id, optimized_data, optimized_ats_score,
+                resume_id, optimized_data_dict, optimized_ats_score,
                 original_ats_score=original_ats_score,
                 matching_skills=optimized_score_result.get("matching_skills", []),
                 missing_skills=optimized_score_result.get("missing_skills", []),
@@ -928,8 +939,16 @@ async def score_resume(
 
                     # Update database with optimized data
                     logger.info(f"Updating resume {resume_id} with optimized data")
+                    # Handle different types of optimized_data (dict or Pydantic model)
+                    if hasattr(optimized_data, 'model_dump') and callable(getattr(optimized_data, 'model_dump')):
+                        # It's a Pydantic model
+                        optimized_data_dict = optimized_data.model_dump()
+                    else:
+                        # It's already a dictionary or something else
+                        optimized_data_dict = optimized_data
+
                     await repo.update_optimized_data(
-                        resume_id, optimized_data.model_dump(), optimized_score,
+                        resume_id, optimized_data_dict, optimized_score,
                         original_ats_score=ats_score,
                         matching_skills=score_result.get("matching_skills", []),
                         missing_skills=score_result.get("missing_skills", []),
