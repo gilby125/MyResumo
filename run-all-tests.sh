@@ -44,3 +44,5 @@ npx playwright test e2e/mcp-test.spec.ts e2e/advanced-mcp.spec.ts --project=chro
 # Generate the test report but don't open it
 echo "Test report generated at ./playwright-report"
 echo "To view the report, run: npx playwright show-report"
+
+

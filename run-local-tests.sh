@@ -49,3 +49,4 @@ echo "Opening test report..."
 npx playwright show-report
 
 echo "Done!"
+
